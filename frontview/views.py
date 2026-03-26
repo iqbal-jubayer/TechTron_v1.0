@@ -1,0 +1,215 @@
+from django.shortcuts import render, HttpResponse, redirect
+from manager.models import *
+from django.db import connection
+from django.db.models import Sum
+from django.db.models import Prefetch
+from django.db.models import F
+
+WEBSITE_NAME = "TechTron"
+
+def ifNotLoggedIn(req):
+    if 'user_id' not in req.session:
+        return redirect('/')
+
+def ifLoggedIn(req):
+    if 'user_id' in req.session:
+        return redirect('/')
+    
+def handleNavbarLogged(req, context):
+    if 'user_id' in req.session:
+        context['logged_in'] = True
+        user = User.objects.get(email=req.session['user_id'])
+        context['user_name'] = user.first_name + " " + user.last_name
+        return user
+
+# Create your views here.
+def home(req):
+    product_prefetch = Prefetch(
+    'belongto_category_set',  # reverse FK from Category → BelongTo_Category
+    queryset=BelongTo_Category.objects.select_related('product').annotate(
+        total_quantity=Sum('product__inventory__quantity')
+    ),
+    to_attr='products_with_quantity')
+    
+    categories = Category.objects.prefetch_related(product_prefetch)
+    
+    category_data = {}
+    for cat in categories:
+        category_data[cat.category_name] = []
+        for bc in cat.products_with_quantity:
+            category_data[cat.category_name].append({
+                'product_id': bc.product.product_id,
+                'product_name': bc.product.product_name,
+                'brand': bc.product.brand,
+                'model':bc.product.model_number,
+                'price': bc.product.price,
+                'total_quantity': bc.total_quantity or 0
+            })
+
+    context = {"mytitle":WEBSITE_NAME, "category_data":category_data}
+    if 'user_id' in req.session:
+        context['logged_in'] = True
+        user = User.objects.get(email=req.session['user_id'])
+        context['user_name'] = user.first_name + " " + user.last_name
+    return render(req, "frontview/home.html", context)
+
+def login(req):
+    context = {"mytitle":WEBSITE_NAME}
+    if 'user_id' in req.session:
+        return redirect('/')
+    if req.method == "POST":
+        user_email = req.POST.get("email")
+        user_password = req.POST.get("password")
+        users = User.objects.filter(email=user_email)
+        
+        if len(users) > 0 and user_password == users[0].password:
+            req.session['user_id'] = users[0].email
+            return redirect('/')
+        else:
+            print("Username or Password is incorrect")
+            context["login_error"] = "Username or Password is incorrect"
+    return render(req, "frontview/login.html", context)
+
+def signup(req):
+    context = {"mytitle":WEBSITE_NAME}
+    
+    if 'user_id' in req.session:
+        return redirect('/')
+    
+    if req.method == "POST":
+        usr_first_name = req.POST.get("firstname")
+        usr_last_name = req.POST.get("lastname")
+        usr_email = req.POST.get("email")
+        usr_password = req.POST.get("password")
+        if len(User.objects.filter(email=usr_email)) == 0:
+            user = User.objects.create(            
+            first_name = usr_first_name,
+            last_name = usr_last_name,
+            email = usr_email,
+            password = usr_password,
+            user_type = "customer")
+            print("Account Created!")
+            return redirect('/login')
+        else:
+            context["account_exist"] = True
+            print("Already Exists!")
+    return render(req, "frontview/signup.html", context)
+
+def logout(req):
+    req.session.flush()
+    return redirect('/')
+
+def product_details(req, id):
+    context = {"mytitle":WEBSITE_NAME}
+    
+    product = Product.objects.annotate(total_quantity=Sum('inventory__quantity')).get(product_id = id)
+    if product.total_quantity is None:
+        product.total_quantity = 0
+    context["product"] = product
+    
+    if req.method == "POST":
+        print(req.POST.get('qty'))
+        
+    handleNavbarLogged(req, context)
+    return render(req, "frontview/product_details.html", context)
+
+def place_order(req):
+    if 'user_id' not in req.session:
+        return redirect('/login')
+    
+    context = {"mytitle":WEBSITE_NAME}
+    if req.method == "POST":
+        qty = req.POST.get('qty')
+        id = req.POST.get('id')
+    
+    product = Product.objects.annotate(total_quantity=Sum('inventory__quantity')).get(product_id = id)
+    if product.total_quantity is None:
+        product.total_quantity = 0
+        
+    context["product"] = product
+    context["qty"] = qty
+    context["total_product_price"] = int(qty) * product.price
+    
+    inv = handleInventory(product.product_id, qty)
+    
+    context["prods"] = []
+    
+    for i, q in inv:
+        context["prods"].append({
+            "qty":q,
+            "total_product_price": int(q) * product.price
+        })
+    
+    context["delivery_cost"] = 70 * len(inv)
+    context["total_cost"] = context["total_product_price"] + context["delivery_cost"]
+    
+    user = handleNavbarLogged(req, context)
+    
+    context["user"] = user
+    
+    return render(req, "frontview/place_order.html", context)
+
+def handleInventory(product_id, qty):
+    qty = int(qty)
+    dat = Inventory.objects.filter(product_id=product_id, quantity__gt=0).order_by('-quantity')
+    total = sum(p.quantity for p in dat)
+    inv = []
+    for p in dat:
+        if p.quantity - qty >= 0:
+            inv.append([p, qty])
+            break
+        else:
+            inv.append([p, p.quantity])
+            qty -= p.quantity
+            
+    return inv
+
+def order_completion(req):
+    if 'user_id' not in req.session:
+        return redirect('/')
+    
+    product_id = req.POST.get('product_id')
+    qty = int(req.POST.get('product_qty'))
+    
+    product = Product.objects.get(product_id=product_id)
+    user = User.objects.get(email=req.session['user_id'])
+    
+    invent = handleInventory(product_id, qty)
+    
+    order = Order.objects.create(user_id = user.user_id)
+    order_item = Order_Item.objects.create(order_item_id=1, quantity=qty, order_id=order.order_id, product_id=product_id)
+    for inv, q in invent:
+        warehouse_id = inv.warehouse_id
+        address = user.address  
+        cost = product.price * q + 70
+        shipment = Shipment.objects.create(order=order, warehouse=inv.warehouse, shipment_address=address, shipping_cost=cost)
+        Inventory.objects.filter(inventory_id=inv.inventory_id).update(quantity=F('quantity')-q)
+    
+    return redirect('/')
+
+def dashboard(req):
+    context = {"mytitle":WEBSITE_NAME}
+    if 'user_id' not in req.session:
+        return redirect('/')
+    
+    user = handleNavbarLogged(req,context)
+    
+    orders = Order.objects.filter(user_id=user.user_id)
+    context["total_order"] = len(orders)
+    context["pending_order"] = 0
+    context["confirmed_order"] = 0
+    context["completed_order"] = 0
+    context["cancelled_order"] = 0
+    
+    for order in orders:
+        stat = order.status.lower()
+        if stat == "pending":
+            context["pending_order"] += 1
+        elif stat == "confirmed":
+            context["confirmed_order"] += 1
+        elif stat == "completed":
+            context["completed_order"] += 1
+        elif stat == "cancelled":
+            context["cancelled_order"] += 1
+    
+    return render(req, "frontview/dashboard.html", context)

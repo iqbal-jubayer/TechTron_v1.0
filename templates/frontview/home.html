@@ -1,0 +1,43 @@
+{% extends "frontview/base.html" %}
+
+{% block title %}TechTron - Home{% endblock title %}
+
+{% block body %}
+<div class="home-container">
+    <div class="home-left-side">
+        <!-- Side-Panel -->
+    </div>
+    <div class="home-right-side">
+        {% for cat, products in category_data.items%}
+        <div class="category-container">
+            <div class="category-name">
+                <p>{{ cat }}</p>
+            </div>
+            <div class="card-holder">
+                {% for product in products%}
+                <div class="product-card" onclick="myFunc('{{product.product_id}}')">
+                    <div class="product-card-img">
+                        <img src="../../static/media/images/laptop.png" alt="laptop">
+                    </div>
+                    <div class="product-card-desc">
+                        <ul>
+                            <li>{{product.product_name}}</li>
+                            <li>{{product.brand}}</li>
+                            <li>{{product.model}}</li>
+                            <li>Price: {{product.price}} BDT</li>
+                            {% if product.total_quantity != 0%}
+                            <li>Available: {{product.total_quantity}}</li>
+                            {%else%}
+                            <li style="color: red; font-weight: bold;">Out of Stock</li>
+                            {% endif%}
+                        </ul>
+                    </div>
+                </div>
+                {% endfor%}
+            </div>
+        </div>
+        {% endfor%}
+    </div>
+</div>
+
+{% endblock body %}

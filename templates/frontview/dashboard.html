@@ -1,0 +1,54 @@
+{% extends "frontview/base.html" %}
+
+{% load static %}
+
+{% block title %}TechTron - Home{% endblock title %}
+
+{% block links %}
+<link rel="stylesheet" href="{% static 'frontview/dashboard.css'%}"> {% endblock links %}
+
+{% block body %}
+
+<div class="dashboard-container">
+    <div class="dashboard-container-items dashboard-left">
+    </div>
+    <div class="dashboard-container-items dashboard-main">
+        <h1>Dashboard</h1>
+        <div class="dashboard-main-item">
+            <form action="/dashboard/orders" method="post">
+                {% csrf_token %}
+                <button class="dashboard-main-card">
+                    All Orders({{total_order}})
+                </button>
+                <button class="dashboard-main-card">
+                    Pending Orders({{pending_order}})
+                </button>
+                <button class="dashboard-main-card">
+                    Confirmed Orders({{confirmed_order}})
+                </button>
+                <button class="dashboard-main-card">
+                    Completed Orders({{completed_order}})
+                </button>
+                <button class="dashboard-main-card">
+                    Cancelled Orders({{cancelled_order}})
+                </button>
+            </form>
+
+        </div>
+    </div>
+    <div class="dashboard-container-items dashboard-right">
+        <div class="dashboard-right-items">
+            <a href="">Account Settings</a>
+        </div>
+        <div class="dashboard-right-items">
+            <a href="">Help & Support</a>
+        </div>
+        <div class="dashboard-right-items">
+            <a href="/logout">Logout</a>
+        </div>
+    </div>
+
+</div>
+
+
+{% endblock body %}

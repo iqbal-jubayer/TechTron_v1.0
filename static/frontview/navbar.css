@@ -1,0 +1,33 @@
+/* <--- Navbar */
+
+.navbar {
+    display: flex;
+    justify-content: left;
+    padding: 5px;
+    background-color: #343a40;
+    border-bottom: 2px solid #5c6772;
+}
+
+.navbar a {
+    text-decoration: none;
+    padding: 3px;
+    color: #ffffff;
+}
+
+.nav-left {
+    width: 90%;
+}
+
+.nav-right {
+    width: 20%;
+    display: flex;
+    justify-content: right;
+    padding: 5px;
+}
+
+.mybtn:hover {
+    background-color: #3898ff;
+    cursor: pointer;
+}
+
+/* Navbar --->*/

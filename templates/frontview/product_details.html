@@ -1,0 +1,62 @@
+{% extends "frontview/base.html" %}
+
+{% block title %}TechTron - {{product.product_name}}{% endblock title %}
+
+{% block body %}
+
+<div class="p-detail-container">
+    <div class="p-detail-main">
+        <div class="p-left">
+            <img src="../../static/media/images/laptop.png" alt="">
+        </div>
+        <div class="p-mid">
+            <h3>{{product.product_name}}</h3>
+            <p>Brand: {{product.brand}} </p>
+            <p>Supplier: {{product.supplier}}</p>
+            <p>Supplier: {{product.price}} BDT</p>
+            {% if product.total_quantity != 0 %}
+            <p>Available: {{product.total_quantity}}</p>
+            <form action="/place_order" method="post">
+                {% csrf_token %}
+                <p>Quantity: <input type="number" name="qty" id="" min="1" step="1" max="{{product.total_quantity}}"
+                        required value="1"></p>
+                    <input type="hidden" name="id" value="{{product.product_id}}">
+                <button type="submit" class="mybtn">Order</button>
+            </form>
+            {% else %}
+            <p style="color: red; font-weight: bold;">Out of Stock</p>
+            {% endif %}
+        </div>
+        <div class="p-right">
+            <!-- <div class="p-right-address">
+                <div class="p-right-address-left">
+                    <i class="fas fa-map-marker-alt"></i>
+                </div>
+                <div class="p-right-address-mid">Dhaka, Dhaka North, Banani Road No. 12 - 19</div>
+                <div class="p-right-address-right"><a href="/">CHANGE</a></div>
+            </div> -->
+
+            <div class="p-right-delivery">
+                <div class="p-right-delivery-left">
+                    <i class="fas fa-wallet"></i>
+                </div>
+                <div class="p-right-delivery-mid">
+                    <div class="p-right-delivery-mid-0">Standard Delivery</div>
+                    <!-- <div class="p-right-delivery-mid-1">Get by 27 Mar-1 Apr</div> -->
+                </div>
+                <div class="p-right-delivery-right">BDT 70</div>
+            </div>
+        </div>
+    </div>
+    <div class="p-detail-main-desc-container">
+        <div class="text-description">
+            <h3>Descriptions</h3>
+        </div>
+        <div class="p-detail-main-desc">
+            {{product.specs}}
+        </div>
+    </div>
+</div>
+<!-- <h1>Product Detail</h1> -->
+
+{% endblock body %}

@@ -1,0 +1,28 @@
+{% extends "frontview/base.html" %}
+
+{% load static %}
+
+{% block title %}TechTron - Login{% endblock title %}
+
+{% block links %}
+<link rel="stylesheet" href="{% static 'frontview/login.css'%}">
+{% endblock links %}
+
+{% block body %}
+<div class="login-container">
+    <div class="login-container-items">
+        <h2>Login</h2>
+    </div>
+    <div class="login-container-items">
+        <form action="" method="post" class="login-form">
+            {% csrf_token %}
+            <p>{{login_error}}</p>
+            <input class="mytextinput" type="email" name="email" placeholder="email">
+            <input class="mytextinput" type="password" name="password" placeholder="password">
+            <input class="mybtn" type="submit" value="Login">
+        </form>
+    </div>
+</div>
+
+
+{% endblock body %}

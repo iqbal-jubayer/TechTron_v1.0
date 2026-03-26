@@ -1,0 +1,9 @@
+asgiref==3.11.1
+Django==4.2
+mysql==0.0.3
+mysqlclient==2.2.8
+packaging==26.0
+setuptools==82.0.1
+sqlparse==0.5.5
+tzdata==2025.3
+wheel==0.46.3

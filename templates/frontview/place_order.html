@@ -1,0 +1,91 @@
+{% extends "frontview/base.html" %}
+
+{% block title %}TechTron - {{product.product_name}}{% endblock title %}
+
+{% block body %}
+
+<div class="p-detail-container">
+    <div class="p-detail-main">
+        <div class="p-left">
+            <img src="../../static/media/images/laptop.png" alt="">
+        </div>
+        <div class="p-mid">
+            <h3>{{product.product_name}}</h3>
+            <p>Brand: {{product.brand}} </p>
+            <p>Supplier: {{product.supplier}}</p>
+            <p>Supplier: {{product.price}} BDT</p>
+            <p>Quantity: {{qty}}</p>
+        </div>
+        <div class="p-right">
+            <div class="p-right-address">
+                <div class="p-right-address-left">
+                    <i class="fas fa-map-marker-alt"></i>
+                </div>
+                <div class="p-right-address-mid">{{user.address}}</div>
+                <div class="p-right-address-right"><a href="/">CHANGE</a></div>
+            </div>
+
+            <div class="p-right-delivery">
+                <div class="p-right-delivery-left">
+                    <i class="fas fa-wallet"></i>
+                </div>
+                <div class="p-right-delivery-mid">
+                    <div class="p-right-delivery-mid-0">Standard Delivery</div>
+                    <!-- <div class="p-right-delivery-mid-1">Get by 27 Mar-1 Apr</div> -->
+                </div>
+                <div class="p-right-delivery-right">BDT 70</div>
+            </div>
+        </div>
+    </div>
+    <div class="p-detail-main-desc-container">
+        <div class="text-description">
+            <h3>Order Summary</h3>
+        </div>
+        <div class="po-detail-main-desc">
+
+            {% for prod in prods%}
+            <div class="po-detail-main-desc-item">
+                <div class="po-detail-main-desc-left">
+                    {{product.product_name}} x {{prod.qty}}
+
+                </div>
+                <div class="po-detail-main-desc-right">
+                    {{prod.total_product_price}} BDT
+                </div>
+            </div>
+            {% endfor %}
+
+            <div class="po-detail-main-desc-item">
+                <div class="po-detail-main-desc-left">
+                    Delivery Charge
+
+                </div>
+                <div class="po-detail-main-desc-right">
+                    {{delivery_cost}} BDT
+                </div>
+            </div>
+            <hr>
+            <div class="po-detail-main-desc-item">
+                <div class="po-detail-main-desc-left">
+                    Total Cost
+
+                </div>
+                <div class="po-detail-main-desc-right">
+                    {{total_cost}} BDT
+                </div>
+            </div>
+            <div class="po-detail-main-desc-item">
+                <div class="po-detail-main-desc-proceed">
+                    <form action="order_completion" method="post">
+                        {% csrf_token %}
+                        <input type="text" name="product_id" value="{{product.product_id}}" hidden>
+                        <input type="text" name="product_qty" value="{{qty}}" hidden>
+                        <button class="mybtn" type="submit">Proceed</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock body %}
