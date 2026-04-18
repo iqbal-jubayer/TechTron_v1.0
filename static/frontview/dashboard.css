@@ -34,6 +34,14 @@
     gap: 10px;
 }
 
+.dashboard-main-item {
+    width: 80%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
 .dashboard-main-item form {
     display: flex;
     margin: 20px;
@@ -46,4 +54,88 @@
     border-radius: 10px;
     font-weight: bold;
     cursor: pointer;
+}
+
+.item-card{
+    /* background-color: red; */
+    width: 80%;
+    margin: 5px;
+    padding: 5px;
+    border: 2px dashed black;
+    border-radius: 10px;
+    display: flex;
+}
+
+.item-card-left{
+    background: yellow; 
+    /* width: 50%; */
+    margin: 10px;
+    display: flex;
+    flex-direction: column;
+}
+.item-card-left img{
+    /* height: 80%; */
+}
+
+.item-card-middle{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    width: 50%;
+}
+
+.item-card-right{
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: end;
+    width: 50%;
+}
+
+.item-card-right p{
+    padding: 0 10px 0 15px;
+    border-radius: 10px;
+    border: 2px solid black;
+    font-weight: 600;
+}
+
+.item-card-right button{
+     display: inline-block;
+    padding: 8px 12px;
+    background: red;
+    color: white;
+    text-decoration: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+.item-card-right button:hover{
+    background: rgb(221, 0, 0);
+}
+
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.p-PENDING{
+    background-color: orange;
+}
+
+.p-CONFIRMED{
+    background-color: #3B82F6;
+}
+.p-PROCESSING{
+    background-color: #8B5CF6;
+}
+.p-ON_HOLD{
+    background-color: #F97316;
+}
+.p-CANCELLED{
+    background-color: #EF4444;
+}
+.p-COMPLETED{
+    background-color: #22C55E;
+}
+.p-FAILED{
+    background-color: #B91C1C;
 }

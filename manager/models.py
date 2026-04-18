@@ -46,6 +46,7 @@ class Product(models.Model):
     model_number = models.CharField(max_length=255)
     specs = models.TextField()
     price = models.DecimalField(max_digits=10, decimal_places=2)
+    weight = models.DecimalField(max_digits=10, decimal_places=2, default= 100)
     
     def __str__(self):
         return self.product_name
@@ -95,11 +96,21 @@ class Shipment_Carriers(models.Model):
     
     def __str__(self):
         return self.name
+    
+class Inventory(models.Model):
+    inventory_id = models.AutoField(primary_key=True)
+    warehouse = models.ForeignKey(Warehouse, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    location = models.CharField(max_length=200, blank=True, null=True)
+    quantity = models.IntegerField()
+    
+    def __str__(self):
+        return f"{self.inventory_id}, {self.product}, {self.warehouse}" 
 
 class Shipment(models.Model):
     shipment_id = models.AutoField(primary_key=True)
     order = models.ForeignKey(Order, on_delete=models.CASCADE)
-    warehouse = models.ForeignKey(Warehouse, on_delete=models.CASCADE)
+    inventory = models.ForeignKey(Inventory, on_delete=models.CASCADE)
     
     shipment_date = models.DateTimeField(blank=True, null=True)
     delivery_date = models.DateTimeField(blank=True, null=True)
@@ -108,6 +119,7 @@ class Shipment(models.Model):
     
     shipment_address = models.CharField(max_length=300)
     shipping_cost = models.DecimalField(max_digits=10, decimal_places=2)
+    quantity = models.IntegerField(default=0)
     class Type(models.TextChoices):
         PENDING = "PENDING"
         READY_TO_SHIP = "READY_TO_SHIP"
@@ -119,14 +131,3 @@ class Shipment(models.Model):
         LOST = "LOST"
         
     status = models.CharField(max_length=50, choices=Type.choices, default=Type.PENDING)
-    
-
-class Inventory(models.Model):
-    inventory_id = models.AutoField(primary_key=True)
-    warehouse = models.ForeignKey(Warehouse, on_delete=models.CASCADE)
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    location = models.CharField(max_length=200, blank=True, null=True)
-    quantity = models.IntegerField()
-    
-    def __str__(self):
-        return f"{self.inventory_id}, {self.product}, {self.warehouse}" 

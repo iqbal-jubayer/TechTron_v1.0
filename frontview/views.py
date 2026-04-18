@@ -5,6 +5,8 @@ from django.db.models import Sum
 from django.db.models import Prefetch
 from django.db.models import F
 
+from decimal import Decimal, ROUND_HALF_UP
+
 WEBSITE_NAME = "TechTron"
 
 def ifNotLoggedIn(req):
@@ -140,7 +142,9 @@ def place_order(req):
             "total_product_price": int(q) * product.price
         })
     
-    context["delivery_cost"] = 70 * len(inv)
+    product_weight_cost = Decimal(qty) * product.weight * Decimal(0.1)
+    product_weight_cost = product_weight_cost.quantize(Decimal('0.00'), rounding=ROUND_HALF_UP)
+    context["delivery_cost"] = 70 * len(inv) + product_weight_cost
     context["total_cost"] = context["total_product_price"] + context["delivery_cost"]
     
     user = handleNavbarLogged(req, context)
@@ -180,9 +184,10 @@ def order_completion(req):
     order_item = Order_Item.objects.create(order_item_id=1, quantity=qty, order_id=order.order_id, product_id=product_id)
     for inv, q in invent:
         warehouse_id = inv.warehouse_id
+        inventory_id = inv.inventory_id
         address = user.address  
         cost = product.price * q + 70
-        shipment = Shipment.objects.create(order=order, warehouse=inv.warehouse, shipment_address=address, shipping_cost=cost)
+        shipment = Shipment.objects.create(order=order, inventory=inv, shipment_address=address, shipping_cost=cost, quantity = q)
         Inventory.objects.filter(inventory_id=inv.inventory_id).update(quantity=F('quantity')-q)
     
     return redirect('/')
@@ -194,7 +199,7 @@ def dashboard(req):
     
     user = handleNavbarLogged(req,context)
     
-    orders = Order.objects.filter(user_id=user.user_id)
+    orders = Order.objects.raw(f"SELECT ordr.order_id as order_id, order_date, ordr.status as status, delivery_date, carrier_phone, SUM(shipping_cost) as total_cost, shipment_address as address, oi.quantity, p.product_id, product_name, brand, model_number, specs, price, weight, name as supplier_name FROM manager_order ordr JOIN manager_shipment shipment ON ordr.order_id = shipment.order_id JOIN manager_order_item oi ON ordr.order_id = oi.order_id JOIN manager_product p ON oi.product_id = p.product_id JOIN manager_supplier splr ON splr.supplier_id = p.supplier_id WHERE user_id = {user.user_id} GROUP BY ordr.order_id;")
     context["total_order"] = len(orders)
     context["pending_order"] = 0
     context["confirmed_order"] = 0
@@ -211,5 +216,31 @@ def dashboard(req):
             context["completed_order"] += 1
         elif stat == "cancelled":
             context["cancelled_order"] += 1
+            
+    context["selected_filter"] = req.GET.get("filter")
+    context["orders"] = orders
     
     return render(req, "frontview/dashboard.html", context)
+
+def help(req):
+    context = {"mytitle":WEBSITE_NAME}
+    handleNavbarLogged(req, context)
+    return render(req, "frontview/help.html", context)
+
+def cancelOrder(req,id):
+    if 'user_id' not in req.session:
+        return redirect('/login')
+    context = {"mytitle":WEBSITE_NAME}
+    user = handleNavbarLogged(req, context)
+    try:
+        order = Order.objects.get(order_id=id, user_id=user.user_id)
+        shipments = Shipment.objects.filter(order_id=id)
+        for shipment in shipments:
+            inventory = Inventory.objects.get(inventory_id = shipment.inventory.inventory_id)
+            inventory.quantity += shipment.quantity
+            inventory.save()
+        order.status = "CANCELLED"
+        order.save()
+    except Exception as e:
+        print(e)
+    return redirect('/dashboard/')

@@ -1,0 +1,33 @@
+{% extends "frontview/base.html" %}
+
+{% load static %}
+
+{% block title %}TechTron - Home{% endblock title %}
+
+{% block links %}
+<link rel="stylesheet" href="{% static 'frontview/help.css'%}"> {% endblock links %}
+
+{% block body %}
+
+<div class="main-container">
+    <div class="main-container-items">
+        <h1>Help & Support</h1>
+    </div>
+    <div class="main-container-items">
+        <p>The Help and Support section is designed to assist users in effectively navigating and utilizing the system.
+            It
+            provides clear instructions on key features such as inventory management, order processing, and report
+            generation.
+            Users can find answers to frequently asked questions, troubleshoot common issues, and access step-by-step
+            guides
+            for
+            performing essential tasks. In case of unresolved problems, the support section offers multiple contact
+            options,
+            including email and direct assistance from system administrators. This ensures that users can quickly
+            resolve
+            issues, minimize disruptions, and maintain smooth operation of the system.</p>
+    </div>
+</div>
+
+
+{% endblock body %}

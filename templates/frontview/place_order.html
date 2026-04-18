@@ -76,7 +76,7 @@
             </div>
             <div class="po-detail-main-desc-item">
                 <div class="po-detail-main-desc-proceed">
-                    <form action="order_completion" method="post">
+                    <form action="/order_completion/" method="post">
                         {% csrf_token %}
                         <input type="text" name="product_id" value="{{product.product_id}}" hidden>
                         <input type="text" name="product_qty" value="{{qty}}" hidden>

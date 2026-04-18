@@ -13,10 +13,11 @@
             <h3>{{product.product_name}}</h3>
             <p>Brand: {{product.brand}} </p>
             <p>Supplier: {{product.supplier}}</p>
-            <p>Supplier: {{product.price}} BDT</p>
+            <p>Weight: {{product.weight}} gm</p>
+            <p>Price: {{product.price}} BDT</p>
             {% if product.total_quantity != 0 %}
             <p>Available: {{product.total_quantity}}</p>
-            <form action="/place_order" method="post">
+            <form action="/place_order/" method="post">
                 {% csrf_token %}
                 <p>Quantity: <input type="number" name="qty" id="" min="1" step="1" max="{{product.total_quantity}}"
                         required value="1"></p>
