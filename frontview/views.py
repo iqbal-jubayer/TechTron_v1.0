@@ -178,15 +178,17 @@ def order_completion(req):
     
     invent = handleInventory(product_id, qty)
     
+    if user.address is None:
+        return redirect('/')
+    
     order = Order.objects.create(user_id = user.user_id)
     order_item = Order_Item.objects.create(order_item_id=1, quantity=qty, order_id=order.order_id, product_id=product_id)
     for inv, q in invent:
-        warehouse_id = inv.warehouse_id
         inventory_id = inv.inventory_id
         address = user.address  
         cost = product.price * q + 70
         shipment = Shipment.objects.create(order=order, inventory=inv, shipment_address=address, shipping_cost=cost, quantity = q)
-        Inventory.objects.filter(inventory_id=inv.inventory_id).update(quantity=F('quantity')-q)
+        Inventory.objects.filter(inventory_id=inventory_id).update(quantity=F('quantity')-q)
     
     return redirect('/')
 
@@ -196,8 +198,33 @@ def dashboard(req):
         return redirect('/')
     
     user = handleNavbarLogged(req,context)
-    
-    orders = Order.objects.raw(f"SELECT ordr.order_id as order_id, order_date, ordr.status as status, delivery_date, carrier_phone, SUM(shipping_cost) as total_cost, shipment_address as address, oi.quantity, p.product_id, product_name, brand, model_number, specs, price, weight, name as supplier_name FROM manager_order ordr JOIN manager_shipment shipment ON ordr.order_id = shipment.order_id JOIN manager_order_item oi ON ordr.order_id = oi.order_id JOIN manager_product p ON oi.product_id = p.product_id JOIN manager_supplier splr ON splr.supplier_id = p.supplier_id WHERE user_id = {user.user_id} GROUP BY ordr.order_id;")
+    orders = Order.objects.raw(f'''
+                            SELECT
+                            ordr.order_id as order_id,
+                            order_date,
+                            ordr.status as status,
+                            delivery_date,
+                            carrier_phone,
+                            SUM(shipping_cost) as total_cost,
+                            shipment_address as address,
+                            oi.quantity, 
+                            p.product_id,
+                            product_name,
+                            brand,
+                            model_number,
+                            specs,
+                            price,
+                            weight,
+                            name as supplier_name
+                            FROM manager_order ordr 
+                            JOIN manager_shipment shipment ON ordr.order_id = shipment.order_id 
+                            JOIN manager_order_item oi ON ordr.order_id = oi.order_id 
+                            JOIN manager_product p ON oi.product_id = p.product_id 
+                            JOIN manager_supplier splr ON splr.supplier_id = p.supplier_id 
+                            WHERE user_id = {user.user_id} 
+                            GROUP BY ordr.order_id, shipment.delivery_date, carrier_phone, shipment_address, oi.quantity, p.product_id
+                            ORDER BY order_date DESC;''')
+        
     context["total_order"] = len(orders)
     context["pending_order"] = 0
     context["confirmed_order"] = 0
@@ -226,7 +253,7 @@ def help(req):
     handleNavbarLogged(req, context)
     return render(req, "frontview/help.html", context)
 
-def cancelOrder(req,id):
+def cancelOrder(req,id): 
     if 'user_id' not in req.session:
         return redirect('/login')
     context = {"mytitle":WEBSITE_NAME}
@@ -243,3 +270,5 @@ def cancelOrder(req,id):
     except Exception as e:
         print(e)
     return redirect('/dashboard/')
+
+

@@ -1,0 +1,18 @@
+{% extends "frontview/base.html" %}
+
+{% load static %}
+
+{% block title %}TechTron - Home{% endblock title %}
+
+{% block links %}
+<link rel="stylesheet" href="{% static 'manager/dashboard.css'%}">
+{% endblock links %}
+
+{% block body %}
+<div class="container">
+    
+</div>
+    <h1>{{warehouse.name}}</h1>
+    <h1>{{warehouse.area}}</h1>
+    <h1>{{warehouse.district}}</h1>
+{% endblock body %}

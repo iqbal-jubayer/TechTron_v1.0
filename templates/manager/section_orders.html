@@ -1,0 +1,90 @@
+<div id="{{content.order_id}}" class="card">
+    <div class="card-info-order">
+        <form action="update/orders/" method="post">
+            {% csrf_token %}
+            <div class="card-info-order-top">
+                <div class="card-info-order-left">
+                    <div class="card-item">
+                        <h2>Order No. {{content.order_id}}</h2>
+                        <input type="text" name="order_id" value="{{content.order_id}}" hidden>
+                    </div>
+                    <div class="card-item">
+                        <p><b>Product:</b> {{content.product_name}}</p>
+                    </div>
+
+                    <div class="card-item">
+                        <p><b>Model:</b> {{content.model_number}}</p>
+                    </div>
+
+                    <div class="card-item">
+                        <p><b>Brand:</b> {{content.brand}}</p>
+                    </div>
+
+                    <div class="card-item">
+                        <p><b>Unit Price:</b> {{content.price}} BDT</p>
+                    </div>
+
+                    <div class="card-item">
+                        <p><b>Weight:</b> {{content.weight}} g</p>
+                    </div>
+
+                    <div class="card-item">
+                        <p><b>warehouse:</b> {{content.warehouse}}</p>
+                    </div>
+
+                    <div class="card-item">
+                        <p><b>Supplier:</b> {{content.supplier_name}}</p>
+                    </div>
+
+                    <div class="card-item">
+                        <p><b>Payment Method:</b> COD</p>
+                    </div>
+
+                    <div class="card-item">
+                        <p><b>Total Cost:</b> {{content.shipping_cost}} BDT</p>
+                    </div>
+
+
+                    <div class="card-item">
+                        <b> Order Status: </b>
+                        {% if content.status != 'CANCELLED' %}
+                        <select name="status">
+                            <option value="1" {% if content.status == 'PENDING' %} selected {% endif %}>PENDING</option>
+                            <option value="2" {% if content.status == 'PROCESSING' %} selected {% endif %}>PROCESSING</option>
+                            <option value="3" {% if content.status == 'CONFIRMED' %} selected {% endif %}>CONFIRMED</option>
+                            <option value="4" {% if content.status == 'COMPLETED' %} selected {% endif %}>COMPLETED</option>
+                            <option value="5" {% if content.status == 'CANCELLED' %} selected {% endif %}>CANCELLED</option>
+                        </select>
+                        {% else %}
+                        <select name="status">
+                            <option value="5" {% if content.status == 'CANCELLED' %} selected {% endif %}>CANCELLED</option>
+                        </select>
+                        {% endif %}
+                    </div>
+
+                </div>
+                <div class="card-info-order-right">
+
+                    <div class="card-item">
+                        <p><b>Ordered By: </b> {{content.first_name}} {{content.last_name}} ({{content.email}})</p>
+                    </div>
+
+                    <div class="card-item">
+                        <p><b>Address: </b> <input type="text" name="address" value="{{content.address}}"></p>
+                    </div>
+
+                    <div class="card-item">
+                        <p><b>Placed Order On: </b> {{content.order_date}}</p>
+                    </div>
+
+                </div>
+            </div>
+            <div class="card-info-order-bottom">
+                <div class="card-item">
+                    <button type="submit" class="mybtn" style="color: white;">Update</button>
+                </div>
+            </div>
+
+        </form>
+    </div>
+</div>

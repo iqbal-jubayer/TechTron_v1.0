@@ -1,0 +1,39 @@
+<div class="card">
+    <div class="card-img">
+        <img src="../../static/media/images/laptop.png" alt="">
+    </div>
+    <div class="card-info">
+        <div class="card-item">
+            <h3>{{content.product.product_name}}</h3>
+        </div>
+        <div class="card-item">
+            <b>Brand:</b> {{content.product.brand}}
+        </div>
+        <div class="card-item">
+            <b>Model:</b> {{content.product.model_number}}
+        </div>
+        <div class="card-item">
+            <b>Weight:</b> {{content.product.weight}} g
+        </div>
+        <div class="card-item">
+            <b>Price:</b> {{content.product.price}}
+        </div>
+        <div class="card-item">
+            <b>Supplier:</b> {{content.product.supplier_name}}
+        </div>
+        <div class="card-item">
+            <b>Categories:</b> |
+            {% for cat in content.categories %}
+            {{cat.category_name}} |
+            {% endfor %}
+        </div>
+    </div>
+    <div class="card-options">
+        <button>
+            <i class="fa-solid fa-pen-to-square"></i>
+        </button>
+        <button>
+            <i class="fas fa-trash-alt"></i>
+        </button>
+    </div>
+</div>
