@@ -1,9 +1,198 @@
-{% extends "manager/base.html" %}
+{% extends "frontview/base.html" %}
 
-{% block title %} TechTron - Dashboard {% endblock title %}
+{% load static %}
+
+{% block title %}TechTron - Home{% endblock title %}
+
+{% block links %}
+<link rel="stylesheet" href="{% static 'manager/dashboard.css'%}">
+{% endblock links %}
 
 {% block body %}
+<div class="main-container">
+    <div class="main-container-item">
+        <div class="container">
+            <div class="container-left">
+                <div class="container-left-item" style="padding: 20px;">
+                    <h2>Manage</h2>
+                </div>
+                <div class="container-left-item">
+                    <p><a href="?filter=warehouse">warehouse</a></p>
+                </div>
+                <div class="container-left-item">
+                    <p><a href="?filter=inventory">Inventory</a></p>
+                </div>
+                <div class="container-left-item">
+                    <p><a href="?filter=orders">Orders</a></p>
+                </div>
+                <div class="container-left-item">
+                    <p><a href="?filter=suppliers">Suppliers</a></p>
+                </div>
+                <div class="container-left-item">
+                    <p><a href="?filter=categories">Categories</a></p>
+                </div>
+                <div class="container-left-item">
+                    <p><a href="?filter=products">Products</a></p>
+                </div>
+                <div class="container-left-item">
+                    <p><a href="?filter=customers">Customers</a></p>
+                </div>
+            </div>
+            <div class="container-mid">
 
-<a href="manage_warehouse">Manage Warehouse</a>
+                {% if selected_filter == None%}
+                <h1 style="text-align: center;">{{"WAREHOUSE"|upper}}</h1>
+                {% else %}
+                <h1 style="text-align: center;">{{selected_filter|upper}}</h1>
+                {% endif%}
+
+                {% for content in contents%}
+                {% if selected_filter == "warehouse" or selected_filter == None %}
+                <div class="card">
+                    <div class="card-item">
+                        Name: {{content.name}}
+                    </div>
+                    <div class="card-item">
+                        Locations: {{content.location}}
+                    </div>
+                    <div class="card-item">
+                        Inventories: {{content.total_inventory}}
+                    </div>
+                    <div class="card-item">
+                        Stocked Items: {{content.stock}}
+                    </div>
+                </div>
+
+                {% elif selected_filter == "inventory" %}
+                <div class="card">
+                    <div class="card-item">
+                        <h3>{{content.product_name}}</h3>
+                    </div>
+                    <div class="card-item">
+                        <b>Brand:</b> {{content.brand}}
+                    </div>
+                    <div class="card-item">
+                        <b>Model:</b> {{content.model_number}}
+                    </div>
+                    <div class="card-item">
+                        <b>Weight:</b> {{content.weight}} g
+                    </div>
+                    <div class="card-item">
+                        <b>Price:</b> {{content.price}}
+                    </div>
+                    <div class="card-item">
+                        <b>Supplier:</b> {{content.supplier_name}}
+                    </div>
+                    <br>
+                    <div class="card-item">
+                        <b>Warehouse:</b> {{content.warehouse_name}}
+                    </div>
+                    {% if content.quantity > 0 %}
+                    <div class="card-item">
+                        <b>In Stock:</b> {{content.quantity}}
+                    </div>
+                    {% else %}
+                    <div class="card-item">
+                        <h2 style="color: rgb(164, 0, 0);">Out Of Stock</h2>
+                    </div>
+                    {% endif %}
+                </div>
+
+                {% elif selected_filter == "customers" %}
+                <div class="card">
+                    <div class="card-item">
+                        <h3>{{content.first_name}}, {{content.last_name}}</h3>
+                    </div>
+                    <div class="card-item">
+                        <p><b>Email:</b> {{content.email}}</p>
+                    </div>
+                    <div class="card-item">
+                        <p><b>Address:</b> {{content.address}}</p>
+                    </div>
+                    <br>
+                    <div class="card-item">
+                        <p><b>Total Orders:</b> {{content.total_order}}</p>
+                    </div>
+                    <div class="card-item">
+                        <p><b>Pending Orders:</b> {{content.pending}}</p>
+                    </div>
+                    <div class="card-item">
+                        <p><b>Processing Orders:</b> {{content.processing}}</p>
+                    </div>
+                    <div class="card-item">
+                        <p><b>Confirmed Orders:</b> {{content.confirmed}}</p>
+                    </div>
+                    <div class="card-item">
+                        <p><b>Completed Orders:</b> {{content.completed}}</p>
+                    </div>
+                    <div class="card-item">
+                        <p><b>Cancelled Orders:</b> {{content.cancelled}}</p>
+                    </div>
+                </div>
+
+                {% elif selected_filter == "suppliers" %}
+                <div class="card">
+                    <div class="card-item">
+                        <h3>{{content.name}}</h3>
+                    </div>
+                    <div class="card-item">
+                        <p><b>Email:</b> {{content.email}}</p>
+                    </div>
+                    <div class="card-item">
+                        <p><b>Address:</b> {{content.address}}</p>
+                    </div>
+                    <div class="card-item">
+                        <p><b>Contact Person:</b> {{content.contact_person}}</p>
+                    </div>
+                </div>
+
+                {% elif selected_filter == "categories" %}
+                <div class="card">
+                    <div class="card-item">
+                        <h3>{{content.category_name}}</h3>
+                    </div>
+                    <div class="card-item">
+                        <p><b>Total Product of this category:</b> {{content.products}}</p>
+                    </div>
+                </div>
+
+                {% elif selected_filter == "products" %}
+                <div class="card">
+                    <div class="card-item">
+                        <h3>{{content.product.product_name}}</h3>
+                    </div>
+                    <div class="card-item">
+                        <b>Brand:</b> {{content.product.brand}}
+                    </div>
+                    <div class="card-item">
+                        <b>Model:</b> {{content.product.model_number}}
+                    </div>
+                    <div class="card-item">
+                        <b>Weight:</b> {{content.product.weight}} g
+                    </div>
+                    <div class="card-item">
+                        <b>Price:</b> {{content.product.price}}
+                    </div>
+                    <div class="card-item">
+                        <b>Supplier:</b> {{content.product.supplier_name}}
+                    </div>
+                    <div class="card-item">
+                        <b>Categories:</b> |
+                        {% for cat in content.categories %}
+                            {{cat.category_name}} | 
+                        {% endfor %}
+                    </div>
+                </div>
+
+
+                {% endif %}
+                {% endfor %}
+
+            </div>
+            <div class="container-right">Right</div>
+        </div>
+    </div>
+</div>
+
 
 {% endblock body %}

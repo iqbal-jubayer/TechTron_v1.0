@@ -70,6 +70,11 @@
         </div>
     </div>
     <div class="dashboard-container-items dashboard-right">
+        {% if user.user_type == "manager" %}
+        <div class="dashboard-right-items">
+            <a href="/manager/dashboard/">Managing Dashboard</a>
+        </div>
+        {% endif %}
         <div class="dashboard-right-items">
             <a href="">Account Settings</a>
         </div>

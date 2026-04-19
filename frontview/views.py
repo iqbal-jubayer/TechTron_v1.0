@@ -1,10 +1,8 @@
 from django.shortcuts import render, HttpResponse, redirect
 from manager.models import *
-from django.db import connection
 from django.db.models import Sum
 from django.db.models import Prefetch
 from django.db.models import F
-
 from decimal import Decimal, ROUND_HALF_UP
 
 WEBSITE_NAME = "TechTron"
@@ -219,6 +217,7 @@ def dashboard(req):
             
     context["selected_filter"] = req.GET.get("filter")
     context["orders"] = orders
+    context["user"] = user
     
     return render(req, "frontview/dashboard.html", context)
 
