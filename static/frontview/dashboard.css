@@ -67,14 +67,9 @@
 }
 
 .item-card-left{
-    background: yellow; 
-    /* width: 50%; */
     margin: 10px;
     display: flex;
     flex-direction: column;
-}
-.item-card-left img{
-    /* height: 80%; */
 }
 
 .item-card-middle{

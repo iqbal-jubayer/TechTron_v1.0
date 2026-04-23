@@ -1,72 +1,82 @@
 from django.shortcuts import render, HttpResponse, redirect
 from manager.models import *
-from django.db.models import Sum
-from django.db.models import Prefetch
-from django.db.models import F
-from decimal import Decimal, ROUND_HALF_UP
+
+from django.db import connection
+from datetime import datetime
+
+
 
 WEBSITE_NAME = "TechTron"
-
-def ifNotLoggedIn(req):
-    if 'user_id' not in req.session:
-        return redirect('/')
-
-def ifLoggedIn(req):
-    if 'user_id' in req.session:
-        return redirect('/')
     
 def handleNavbarLogged(req, context):
     if 'user_id' in req.session:
         context['logged_in'] = True
-        user = User.objects.get(email=req.session['user_id'])
+        email = req.session['user_id']
+        user = User.objects.raw(
+            f'''
+            SELECT * FROM manager_user WHERE email="{email}";
+            '''
+        )[0]
         context['user_name'] = user.first_name + " " + user.last_name
         return user
 
 # Create your views here.
 def home(req):
-    product_prefetch = Prefetch(
-    'belongto_category_set',  # reverse FK from Category → BelongTo_Category
-    queryset=BelongTo_Category.objects.select_related('product').annotate(
-        total_quantity=Sum('product__inventory__quantity')
-    ),
-    to_attr='products_with_quantity')
+    context = {"mytitle":WEBSITE_NAME}
     
-    categories = Category.objects.prefetch_related(product_prefetch)
-    
-    category_data = {}
-    for cat in categories:
-        category_data[cat.category_name] = []
-        for bc in cat.products_with_quantity:
-            category_data[cat.category_name].append({
-                'product_id': bc.product.product_id,
-                'product_name': bc.product.product_name,
-                'brand': bc.product.brand,
-                'model':bc.product.model_number,
-                'price': bc.product.price,
-                'total_quantity': bc.total_quantity or 0
-            })
-
-    context = {"mytitle":WEBSITE_NAME, "category_data":category_data}
     if 'user_id' in req.session:
+        user_email = req.session['user_id']
         context['logged_in'] = True
-        user = User.objects.get(email=req.session['user_id'])
+        user = User.objects.raw(
+            f'''
+            SELECT * FROM manager_user WHERE email="{user_email}"
+            '''
+        )[0]
         context['user_name'] = user.first_name + " " + user.last_name
+            
+    categories = Category.objects.raw('''
+                                        SELECT * FROM manager_category;
+                                        ''') # To scap the categories
+    categories_data = []
+    for cat in categories:
+        product_details = BelongTo_Category.objects.raw(f'''
+                                                        SELECT id, 
+                                                        p.product_id,
+                                                        product_name,
+                                                        brand, 
+                                                        model_number,
+                                                        price,
+                                                        weight,
+                                                        sum(quantity) as total_quantity 
+                                                        FROM manager_belongto_category bc 
+                                                        JOIN manager_category c ON bc.category_id = c.category_id 
+                                                        JOIN manager_product p ON bc.product_id = p.product_id 
+                                                        LEFT JOIN manager_inventory i ON i.product_id = p.product_id 
+                                                        WHERE bc.category_id = {cat.category_id} GROUP BY id;
+                                                        ''') # Getting product and inventory info for each category
+        categories_data.append([cat, product_details])
+        
+    context["category_data"] = categories_data
+
     return render(req, "frontview/home.html", context)
 
 def login(req):
     context = {"mytitle":WEBSITE_NAME}
     if 'user_id' in req.session:
         return redirect('/')
+    
     if req.method == "POST":
         user_email = req.POST.get("email")
         user_password = req.POST.get("password")
-        users = User.objects.filter(email=user_email)
+        users = User.objects.raw(
+            f'''
+            SELECT * FROM manager_user WHERE email='{user_email}'
+            ''')[0]
         
-        if len(users) > 0 and user_password == users[0].password:
-            req.session['user_id'] = users[0].email
+        if user_password == users.password:
+            req.session['user_id'] = users.email
             return redirect('/')
         else:
-            print("Username or Password is incorrect")
             context["login_error"] = "Username or Password is incorrect"
     return render(req, "frontview/login.html", context)
 
@@ -81,13 +91,17 @@ def signup(req):
         usr_last_name = req.POST.get("lastname")
         usr_email = req.POST.get("email")
         usr_password = req.POST.get("password")
-        if len(User.objects.filter(email=usr_email)) == 0:
-            user = User.objects.create(            
-            first_name = usr_first_name,
-            last_name = usr_last_name,
-            email = usr_email,
-            password = usr_password,
-            user_type = "customer")
+        user = User.objects.raw(
+            f'''
+            SELECT * FROM manager_user WHERE email = "{usr_email}"
+            ''')
+        if len(user) == 0:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    """
+                    INSERT INTO manager_user (first_name, last_name, email, password, user_type)
+                    VALUES (%s, %s, %s, %s, %s);
+                    """, (usr_first_name, usr_last_name, usr_email, usr_password, "customer"))
             print("Account Created!")
             return redirect('/login')
         else:
@@ -101,16 +115,28 @@ def logout(req):
 
 def product_details(req, id):
     context = {"mytitle":WEBSITE_NAME}
+    product = Product.objects.raw(f'''
+                                  SELECT p.product_id,
+                                  p.product_name,
+                                  brand,
+                                  model_number,
+                                  price,
+                                  weight,
+                                  s.name as supplier_name,
+                                  SUM(quantity) as total_quantity
+                                  FROM manager_product p
+                                  LEFT JOIN manager_inventory i ON i.product_id = p.product_id 
+                                  LEFT JOIN manager_supplier s ON s.supplier_id = p.product_id 
+                                  WHERE p.product_id = {id} GROUP BY p.product_id;
+                                  ''')[0]
     
-    product = Product.objects.annotate(total_quantity=Sum('inventory__quantity')).get(product_id = id)
-    if product.total_quantity is None:
-        product.total_quantity = 0
     context["product"] = product
     
-    if req.method == "POST":
-        print(req.POST.get('qty'))
+    if product.total_quantity is None:
+        product.total_quantity = 0
         
     handleNavbarLogged(req, context)
+    
     return render(req, "frontview/product_details.html", context)
 
 def place_order(req):
@@ -118,11 +144,32 @@ def place_order(req):
         return redirect('/login')
     
     context = {"mytitle":WEBSITE_NAME}
+    
+    user = handleNavbarLogged(req, context)
+    context["user"] = user
+    
     if req.method == "POST":
         qty = req.POST.get('qty')
         id = req.POST.get('id')
+        
+    product = Product.objects.raw(
+        '''
+        SELECT 
+        p.product_id,
+        p.product_name,
+        p.brand,
+        p.model_number,
+        p.specs,
+        p.price,
+        p.supplier_id,
+        p.weight,
+        SUM(i.quantity) as total_quantity
+        FROM manager_product p 
+        LEFT JOIN manager_inventory i ON i.product_id = p.product_id 
+        WHERE p.product_id = %s GROUP BY p.product_id;
+        ''', [id]
+        )[0]
     
-    product = Product.objects.annotate(total_quantity=Sum('inventory__quantity')).get(product_id = id)
     if product.total_quantity is None:
         product.total_quantity = 0
         
@@ -137,24 +184,28 @@ def place_order(req):
     for i, q in inv:
         context["prods"].append({
             "qty":q,
-            "total_product_price": int(q) * product.price
+            "total_product_price": float(q) * float(product.price)
         })
-    
-    product_weight_cost = Decimal(qty) * product.weight * Decimal(0.1)
-    product_weight_cost = product_weight_cost.quantize(Decimal('0.00'), rounding=ROUND_HALF_UP)
+        
+    product_weight_cost = float(product.weight) * float(qty) * 0.1
     context["delivery_cost"] = 70 * len(inv) + product_weight_cost
-    context["total_cost"] = context["total_product_price"] + context["delivery_cost"]
-    
-    user = handleNavbarLogged(req, context)
-    
-    context["user"] = user
+    context["total_cost"] = float(context["total_product_price"]) + float(context["delivery_cost"])
     
     return render(req, "frontview/place_order.html", context)
 
 def handleInventory(product_id, qty):
     qty = int(qty)
-    dat = Inventory.objects.filter(product_id=product_id, quantity__gt=0).order_by('-quantity')
-    total = sum(p.quantity for p in dat)
+    
+    dat = Inventory.objects.raw(
+        '''
+        SELECT
+        *
+        FROM manager_inventory 
+        WHERE product_id = %s AND quantity > 0
+        ORDER BY quantity DESC;
+        ''', [product_id]
+    )
+    
     inv = []
     for p in dat:
         if p.quantity - qty >= 0:
@@ -173,22 +224,74 @@ def order_completion(req):
     product_id = req.POST.get('product_id')
     qty = int(req.POST.get('product_qty'))
     
-    product = Product.objects.get(product_id=product_id)
-    user = User.objects.get(email=req.session['user_id'])
+    product = Product.objects.raw(
+        '''
+        SELECT
+        *
+        FROM manager_product
+        WHERE product_id = %s;
+        ''', [product_id]
+    )[0]
+    
+    user_email = req.session['user_id']
+    user = User.objects.raw(
+        '''
+        SELECT
+        *
+        FROM manager_user
+        WHERE email = %s;
+        ''', [user_email]
+    )[0]
     
     invent = handleInventory(product_id, qty)
     
     if user.address is None:
         return redirect('/')
     
-    order = Order.objects.create(user_id = user.user_id)
-    order_item = Order_Item.objects.create(order_item_id=1, quantity=qty, order_id=order.order_id, product_id=product_id)
+    with connection.cursor() as cursor:
+        cursor.execute(
+            '''
+            INSERT INTO manager_order(user_id, order_date, status)
+            VALUES(%s, %s, %s);
+            ''', (user.user_id, datetime.now(), "PENDING"))
+        order_id = cursor.lastrowid
+    
+    with connection.cursor() as cursor:
+        cursor.execute(
+            '''
+            INSERT INTO manager_order_item(order_item_id, quantity, order_id, product_id)
+            VALUES(%s, %s, %s, %s);
+            ''', (1, qty, order_id, product_id))
+        
     for inv, q in invent:
         inventory_id = inv.inventory_id
         address = user.address  
         cost = product.price * q + 70
-        shipment = Shipment.objects.create(order=order, inventory=inv, shipment_address=address, shipping_cost=cost, quantity = q)
-        Inventory.objects.filter(inventory_id=inventory_id).update(quantity=F('quantity')-q)
+        
+        with connection.cursor() as cursor:
+            cursor.execute(
+                '''
+                INSERT INTO manager_shipment (order_id, inventory_id, shipment_address, shipping_cost, quantity, status)
+                VALUES (%s, %s, %s, %s, %s, %s);
+                ''', (order_id,inventory_id,address,cost,q, "PENDING"))
+        
+        inventory = Inventory.objects.raw(
+            f'''
+            SELECT 
+            inventory_id,
+            quantity 
+            FROM manager_inventory WHERE inventory_id={inventory_id};
+            '''
+        )[0]
+        inventory.quantity -= q
+        with connection.cursor() as cursor:
+            cursor.execute(
+                f'''
+                UPDATE manager_inventory
+                SET quantity={inventory.quantity}
+                WHERE inventory_id={inventory_id}
+                '''
+            )
     
     return redirect('/')
 
@@ -259,14 +362,38 @@ def cancelOrder(req,id):
     context = {"mytitle":WEBSITE_NAME}
     user = handleNavbarLogged(req, context)
     try:
-        order = Order.objects.get(order_id=id, user_id=user.user_id)
-        shipments = Shipment.objects.filter(order_id=id)
+        order = Order.objects.raw(
+            f'''
+            SELECT * FROM manager_order WHERE order_id={id} AND user_id={user.user_id}
+            '''
+        )[0]
+        shipments = Shipment.objects.raw(
+            f'''
+            SELECT * FROM manager_shipment WHERE order_id = {id}
+            '''
+        )
         for shipment in shipments:
-            inventory = Inventory.objects.get(inventory_id = shipment.inventory.inventory_id)
+            inventory = Inventory.objects.raw(
+                f'''
+                SELECT * FROM manager_inventory WHERE inventory_id = {shipment.inventory.inventory_id}
+                '''
+            )[0]
             inventory.quantity += shipment.quantity
-            inventory.save()
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    f"""
+                    UPDATE manager_inventory 
+                    SET quantity = {inventory.quantity}
+                    WHERE inventory_id = {inventory.inventory_id};
+                    """)
         order.status = "CANCELLED"
-        order.save()
+        with connection.cursor() as cursor:
+                cursor.execute(
+                    f"""
+                    UPDATE manager_order 
+                    SET status = "{order.status}"
+                    WHERE order_id = {order.order_id};
+                    """)
     except Exception as e:
         print(e)
     return redirect('/dashboard/')

@@ -1,3 +1,4 @@
+<!-- Humaiya -->
 {% extends "frontview/base.html" %}
 
 {% block title %}TechTron - Home{% endblock title %}
@@ -8,7 +9,7 @@
         <!-- Side-Panel -->
     </div>
     <div class="home-right-side">
-        {% for cat, products in category_data.items%}
+        {% for cat, products in category_data%}
         <div class="category-container">
             <div class="category-name">
                 <p>{{ cat }}</p>
@@ -23,11 +24,11 @@
                         <ul>
                             <li>{{product.product_name}}</li>
                             <li>{{product.brand}}</li>
-                            <li>{{product.model}}</li>
+                            <li>{{product.model_number}}</li>
                             <li>Price: {{product.price}} BDT</li>
-                            {% if product.total_quantity != 0%}
+                            {% if product.total_quantity != None and product.total_quantity != 0%}
                             <li>Available: {{product.total_quantity}}</li>
-                            {%else%}
+                            {% else %}
                             <li style="color: red; font-weight: bold;">Out of Stock</li>
                             {% endif%}
                         </ul>
