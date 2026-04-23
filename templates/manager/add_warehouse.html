@@ -6,21 +6,16 @@
 
 {% block links %}
 <link rel="stylesheet" href="{% static 'frontview/account_settings.css'%}">
+<link rel="stylesheet" href="{% static 'manager/dashboard.css'%}">
+<link rel="stylesheet" href="{% static 'frontview/dashboard.css'%}">
 {% endblock links %}
 
 {% block body %}
 <div class="main-container">
-    <form action="/manager/dashboard/update/warehouse/" method="post">
+    <form action="/manager/dashboard/create/warehouse/" method="post">
         {% csrf_token %}
-        <div class="main-container-item">
-            <input class="mytextinput" name="warehouse_id" type="text" placeholder="warehouse_id"
-                value="{{warehouse.warehouse_id}}" hidden>
-        </div>
         <div class="main-container-upper">
             <div class="main-container-upper-left">
-                <div class="main-container-item" style="padding-bottom: 25px;">
-                    <p>Warehouse No. :</p>
-                </div>
                 <div class="main-container-item" style="padding-bottom: 25px;">
                     <p>Warehouse Name:</p>
                 </div>
@@ -33,24 +28,20 @@
             </div>
             <div class="main-container-upper-right">
                 <div class="main-container-item">
-                    <input class="mytextinput" type="text" placeholder="warehouse_id" value="{{warehouse.warehouse_id}}"
-                        disabled>
+                    <input class="mytextinput" name="name" type="text" placeholder="Warehouse Name"
+                        value="{{warehouse.name}}" required>
                 </div>
                 <div class="main-container-item">
-                    <input class="mytextinput" name="warehouse_name" type="text" placeholder="Warehouse Name"
-                        value="{{warehouse.name}}">
-                </div>
-                <div class="main-container-item">
-                    <input class="mytextinput" name="area" type="text" placeholder="Area" value="{{warehouse.area}}">
+                    <input class="mytextinput" name="area" type="text" placeholder="Area" value="{{warehouse.area}}" required>
                 </div>
                 <div class="main-container-item">
                     <input class="mytextinput" name="district" type="text" placeholder="District"
-                        value="{{warehouse.district}}">
+                        value="{{warehouse.district}}" required>
                 </div>
             </div>
         </div>
         <div class="main-container-bottom">
-            <button class="mybtn">Update</button>
+            <button class="mybtn">Add</button>
         </div>
     </form>
 </div>

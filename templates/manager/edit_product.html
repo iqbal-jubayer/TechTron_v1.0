@@ -1,0 +1,90 @@
+{% extends "frontview/base.html" %}
+
+{% load static %}
+
+{% block title %}TechTron - Home{% endblock title %}
+
+{% block links %}
+<link rel="stylesheet" href="{% static 'frontview/account_settings.css'%}">
+{% endblock links %}
+
+{% block body %}
+<div class="main-container">
+    <form action="/manager/dashboard/update/products/" method="post">
+        {% csrf_token %}
+        <div class="main-container-item">
+            <input class="mytextinput" name="product_id" type="text" placeholder="Supplier ID"
+                value="{{product.product_id}}" hidden>
+        </div>
+        <div class="main-container-upper">
+            <div class="main-container-upper-left">
+                <div class="main-container-item" style="padding-bottom: 25px;">
+                    <p>Product Name :</p>
+                </div>
+                <div class="main-container-item" style="padding-bottom: 25px;">
+                    <p>Brand:</p>
+                </div>
+                <div class="main-container-item" style="padding-bottom: 25px;">
+                    <p>Model:</p>
+                </div>
+                <div class="main-container-item" style="padding-bottom: 25px;">
+                    <p>Specs:</p>
+                </div>
+                <div class="main-container-item" style="padding-bottom: 25px;">
+                    <p>Weight:</p>
+                </div>
+                <div class="main-container-item" style="padding-bottom: 25px;">
+                    <p>Price:</p>
+                </div>
+                <div class="main-container-item" style="padding-bottom: 25px;">
+                    <p>Supplier:</p>
+                </div>
+                <!-- <div class="main-container-item" style="padding-bottom: 25px;">
+                    <p>Categories:</p>
+                </div> -->
+            </div>
+            <div class="main-container-upper-right">
+                <div class="main-container-item">
+                    <input class="mytextinput" name="name" type="text" placeholder="Name" value="{{product.product_name}}" required>
+                </div>
+                <div class="main-container-item">
+                    <input class="mytextinput" name="brand" type="text" placeholder="Brand"
+                        value="{{product.brand}}" required>
+                </div>
+                <div class="main-container-item">
+                    <input class="mytextinput" name="model" type="text" placeholder="Model" value="{{product.model_number}}" required>
+                </div>
+                <div class="main-container-item">
+                    <textarea class="mytextinput" name="specs" id="">{{product.specs}}</textarea>
+                </div>
+                <div class="main-container-item">
+                    <input class="mytextinput" name="weight" type="number" step="any" placeholder="Weight"
+                        value="{{product.weight}}" required> g
+                </div>
+                <div class="main-container-item">
+                    <input class="mytextinput" name="price" type="number" step="any" placeholder="Price"
+                        value="{{product.price}}" required> BDT
+                </div>
+                <div class="main-container-item">
+                    <select class="mytextinput" name="supplier" id="">
+                        {% for supplier in suppliers%}
+                            <option value="{{supplier.supplier_id}}" {% if supplier.supplier_id == product.supplier_id %}selected{% endif %}>{{supplier.name}}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- <div class="main-container-item">
+                    <select class="mytextinput" name="categories" id="">
+                        {% for category in available_categories%}
+                            <option value="{{category.category_id}}"  {% if category.category_id == product_category.category_id %} selected {% endif %}>{{category.category_name}}</option>
+                        {% endfor %}
+                    </select>
+                </div> -->
+            </div>
+        </div>
+        <div class="main-container-bottom">
+            <button class="mybtn">Update</button>
+        </div>
+    </form>
+</div>
+{% endblock body %}

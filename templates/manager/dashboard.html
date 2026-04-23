@@ -29,9 +29,9 @@
                 <div class="container-left-item">
                     <p><a href="?filter=suppliers">Suppliers</a></p>
                 </div>
-                <div class="container-left-item">
+                <!-- <div class="container-left-item">
                     <p><a href="?filter=categories">Categories</a></p>
-                </div>
+                </div> -->
                 <div class="container-left-item">
                     <p><a href="?filter=products">Products</a></p>
                 </div>
@@ -46,6 +46,14 @@
                 {% else %}
                 <h1 style="text-align: center;">{{selected_filter|upper}}</h1>
                 {% endif%}
+                
+                {% if selected_filter != "orders" and selected_filter != "customers" and selected_filter != "categories"%}
+                <div class="manager-dashboard-add">
+                    <form action="add/{{selected_filter}}" method="get">
+                        <button>+</button>
+                    </form>
+                </div>
+                {% endif %}
 
                 {% for content in contents%}
 

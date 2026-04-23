@@ -14,10 +14,17 @@
     width: 10em;
 }
 
-.mytextinput{
+.mytextinput {
     background-color: #343a40;
     color: white;
     border: 0px;
     padding: 10px;
     border-radius: 5px;
+}
+
+.mytextinput-2 {
+    background-color: #343a40;
+    color: white;
+    padding: 5px;
+    border: 0px;
 }

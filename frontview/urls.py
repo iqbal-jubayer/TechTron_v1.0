@@ -12,4 +12,6 @@ urlpatterns = [
     path('dashboard/', views.dashboard),
     path('help/', views.help),
     path('order/<int:id>/cancel/', views.cancelOrder),
+    path('account_settings', views.accountSettings),
+    path('update_account_info/', views.updateAccountInfo),
 ]

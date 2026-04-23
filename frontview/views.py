@@ -27,35 +27,61 @@ def home(req):
     if 'user_id' in req.session:
         user_email = req.session['user_id']
         context['logged_in'] = True
-        user = User.objects.raw(
-            f'''
-            SELECT * FROM manager_user WHERE email="{user_email}"
-            '''
-        )[0]
-        context['user_name'] = user.first_name + " " + user.last_name
+        try:
+            user = User.objects.raw(
+                '''
+                SELECT
+                *
+                FROM manager_user 
+                WHERE email=%s
+                ''', [user_email]
+            )[0]
+            context['user_name'] = user.first_name + " " + user.last_name
+        except Exception as e:
+            print(e)
             
-    categories = Category.objects.raw('''
-                                        SELECT * FROM manager_category;
-                                        ''') # To scap the categories
+    categories = Category.objects.raw(
+        '''
+        SELECT * FROM manager_category;
+        ''')
     categories_data = []
     for cat in categories:
-        product_details = BelongTo_Category.objects.raw(f'''
-                                                        SELECT id, 
-                                                        p.product_id,
-                                                        product_name,
-                                                        brand, 
-                                                        model_number,
-                                                        price,
-                                                        weight,
-                                                        sum(quantity) as total_quantity 
-                                                        FROM manager_belongto_category bc 
-                                                        JOIN manager_category c ON bc.category_id = c.category_id 
-                                                        JOIN manager_product p ON bc.product_id = p.product_id 
-                                                        LEFT JOIN manager_inventory i ON i.product_id = p.product_id 
-                                                        WHERE bc.category_id = {cat.category_id} GROUP BY id;
-                                                        ''') # Getting product and inventory info for each category
+        product_details = BelongTo_Category.objects.raw(
+            '''
+            SELECT
+            id, 
+            p.product_id,
+            product_name,
+            brand, 
+            model_number,
+            price,
+            weight,
+            sum(quantity) as total_quantity 
+            FROM manager_belongto_category bc 
+            JOIN manager_category c ON bc.category_id = c.category_id 
+            JOIN manager_product p ON bc.product_id = p.product_id 
+            LEFT JOIN manager_inventory i ON i.product_id = p.product_id 
+            WHERE bc.category_id = %s GROUP BY id;
+            ''', [cat.category_id])
         categories_data.append([cat, product_details])
         
+    other_products = Product.objects.raw(
+        ''' 
+        SELECT
+        p.product_id,
+        product_name,
+        brand, 
+        model_number,
+        price,
+        weight,
+        sum(quantity) as total_quantity 
+        FROM manager_product p 
+        LEFT JOIN manager_belongto_category bc ON bc.product_id = p.product_id 
+        LEFT JOIN manager_inventory i ON i.product_id = p.product_id WHERE bc.product_id IS NULL
+        GROUP BY product_id;
+        '''
+    )
+    categories_data.append(["Others", other_products])
     context["category_data"] = categories_data
 
     return render(req, "frontview/home.html", context)
@@ -398,4 +424,33 @@ def cancelOrder(req,id):
         print(e)
     return redirect('/dashboard/')
 
+def accountSettings(req):
+    context = {"mytitle":WEBSITE_NAME}
+    if 'user_id' not in req.session:
+        return redirect('/')
+    user = handleNavbarLogged(req,context)
+    context["user"] = user
+    return render(req, "frontview/account_settings.html", context)
 
+def updateAccountInfo(req):
+    context = {"mytitle":WEBSITE_NAME}
+    if 'user_id' not in req.session:
+        return redirect('/')
+    user = handleNavbarLogged(req,context)
+    
+    if req.method == "POST":
+        first_name = req.POST.get("first_name")
+        last_name = req.POST.get("last_name")
+        address = req.POST.get("address")
+        if first_name != user.first_name or last_name != user.last_name or address != user.address:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    '''
+                    UPDATE manager_user
+                    SET first_name=%s,
+                    last_name=%s,
+                    address=%s
+                    WHERE email=%s
+                    ''', [first_name, last_name, address, user.email]
+                )
+    return redirect("/account_settings")

@@ -1,0 +1,32 @@
+.main-container {
+    display: flex;
+    flex-direction: column;
+    /* justify-content: center; */
+    align-items: center;
+    /* height: 50vh; */
+}
+
+.main-container form {
+}
+
+.main-container-upper {
+    display: flex;
+    gap: 10px;
+    padding: 10px;
+}
+
+.main-container-upper-left {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: end;
+}
+
+.main-container-item{
+    padding: 0 0 10px 0;
+}
+
+.main-container-bottom{
+    display: flex;
+    justify-content: center;
+}

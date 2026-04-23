@@ -10,47 +10,40 @@
 
 {% block body %}
 <div class="main-container">
-    <form action="/manager/dashboard/update/warehouse/" method="post">
+    <form action="/update_account_info/" method="post">
         {% csrf_token %}
-        <div class="main-container-item">
-            <input class="mytextinput" name="warehouse_id" type="text" placeholder="warehouse_id"
-                value="{{warehouse.warehouse_id}}" hidden>
-        </div>
         <div class="main-container-upper">
             <div class="main-container-upper-left">
                 <div class="main-container-item" style="padding-bottom: 25px;">
-                    <p>Warehouse No. :</p>
+                    <p>First Name:</p>
                 </div>
                 <div class="main-container-item" style="padding-bottom: 25px;">
-                    <p>Warehouse Name:</p>
+                    <p>Last Name:</p>
                 </div>
                 <div class="main-container-item" style="padding-bottom: 25px;">
-                    <p>Area:</p>
+                    <p>Email:</p>
                 </div>
                 <div class="main-container-item" style="padding-bottom: 25px;">
-                    <p>District:</p>
+                    <p>Address:</p>
                 </div>
             </div>
             <div class="main-container-upper-right">
                 <div class="main-container-item">
-                    <input class="mytextinput" type="text" placeholder="warehouse_id" value="{{warehouse.warehouse_id}}"
-                        disabled>
+                    <input class="mytextinput" name="first_name" type="text" placeholder="First Name" value="{{user.first_name}}">
                 </div>
                 <div class="main-container-item">
-                    <input class="mytextinput" name="warehouse_name" type="text" placeholder="Warehouse Name"
-                        value="{{warehouse.name}}">
+                    <input class="mytextinput" name="last_name" type="text" placeholder="Last Name" value="{{user.last_name}}">
                 </div>
                 <div class="main-container-item">
-                    <input class="mytextinput" name="area" type="text" placeholder="Area" value="{{warehouse.area}}">
+                    <input class="mytextinput" name="email" type="email" placeholder="Email" value="{{user.email}}" disabled>
                 </div>
                 <div class="main-container-item">
-                    <input class="mytextinput" name="district" type="text" placeholder="District"
-                        value="{{warehouse.district}}">
+                    <input class="mytextinput" name="address" type="text" placeholder="Address" value="{{user.address}}">
                 </div>
             </div>
         </div>
         <div class="main-container-bottom">
-            <button class="mybtn">Update</button>
+            <button class="mybtn">Save</button>
         </div>
     </form>
 </div>

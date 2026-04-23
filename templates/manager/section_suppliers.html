@@ -14,11 +14,17 @@
         </div>
     </div>
     <div class="card-options">
-        <button>
-            <i class="fa-solid fa-pen-to-square"></i>
-        </button>
-        <button>
-            <i class="fas fa-trash-alt"></i>
-        </button>
+        <form action="edit/suppliers/{{content.supplier_id}}" method="post">
+            {% csrf_token %}
+            <button>
+                <i class="fa-solid fa-pen-to-square"></i>
+            </button>
+        </form>
+        <form action="delete/suppliers/{{content.supplier_id}}" method="post">
+            {% csrf_token %}
+            <button>
+                <i class="fa-solid fa-trash"></i>
+            </button>
+        </form>
     </div>
 </div>

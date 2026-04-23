@@ -14,11 +14,16 @@
         </div>
     </div>
     <div class="card-options">
-        <form action="edit/warehouse/" method="post">
+        <form action="edit/warehouse/{{content.warehouse_id}}" method="post">
             {% csrf_token %}
-            <input type="text" value="{{content.warehouse_id}}" name="warehouse_id" hidden>
             <button>
                 <i class="fa-solid fa-pen-to-square"></i>
+            </button>
+        </form>
+        <form action="delete/warehouse/{{content.warehouse_id}}" method="post">
+            {% csrf_token %}
+            <button>
+                <i class="fa-solid fa-trash"></i>
             </button>
         </form>
     </div>

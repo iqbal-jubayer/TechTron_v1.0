@@ -29,11 +29,17 @@
         </div>
     </div>
     <div class="card-options">
-        <button>
-            <i class="fa-solid fa-pen-to-square"></i>
-        </button>
-        <button>
-            <i class="fas fa-trash-alt"></i>
-        </button>
+        <form action="edit/products/{{content.product.product_id}}" method="post">
+            {% csrf_token %}
+            <button>
+                <i class="fa-solid fa-pen-to-square"></i>
+            </button>
+        </form>
+        <form action="delete/products/{{content.product_id}}" method="post">
+            {% csrf_token %}
+            <button>
+                <i class="fa-solid fa-trash"></i>
+            </button>
+        </form>
     </div>
 </div>
