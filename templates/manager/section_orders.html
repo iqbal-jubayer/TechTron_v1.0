@@ -48,7 +48,7 @@
                     <div class="card-item">
                         <b> Order Status: </b>
                         {% if content.status != 'CANCELLED' %}
-                        <select name="status">
+                        <select name="status" class="mytextinput">
                             <option value="1" {% if content.status == 'PENDING' %} selected {% endif %}>PENDING</option>
                             <option value="2" {% if content.status == 'PROCESSING' %} selected {% endif %}>PROCESSING</option>
                             <option value="3" {% if content.status == 'CONFIRMED' %} selected {% endif %}>CONFIRMED</option>
@@ -56,7 +56,7 @@
                             <option value="5" {% if content.status == 'CANCELLED' %} selected {% endif %}>CANCELLED</option>
                         </select>
                         {% else %}
-                        <select name="status">
+                        <select name="status" class="mytextinput">
                             <option value="5" {% if content.status == 'CANCELLED' %} selected {% endif %}>CANCELLED</option>
                         </select>
                         {% endif %}
@@ -70,11 +70,34 @@
                     </div>
 
                     <div class="card-item">
-                        <p><b>Address: </b> <input type="text" name="address" value="{{content.address}}"></p>
+                        <p><b>Address: </b> <input class="mytextinput" type="text" name="address" value="{{content.address}}" required></p>
                     </div>
 
                     <div class="card-item">
                         <p><b>Placed Order On: </b> {{content.order_date}}</p>
+                    </div>
+
+                    <div class="card-item">
+                        <p><b>Carrier Partner: </b> 
+
+                            <select name="carrier_partner" id="" class="mytextinput">
+                                <option value="0">None</option>
+                                {% for shipment_carrier in shipment_carriers%}
+                                <option value="{{shipment_carrier.carrier_id}}" {% if content.carrier_partner_id == shipment_carrier.carrier_id %} selected {% endif %}>{{shipment_carrier.name}}</option>
+                                {% endfor %}
+                            </select>
+                    </div>
+
+                    <div class="card-item">
+                        <p><b>Carrier Phone: </b> +880 <input class="mytextinput" name="carrier_phone" type="text" 
+                            {% if content.carrier_phone != None %}
+                            value="{{content.carrier_phone}}"
+                            {% endif %}
+                            placeholder="Carrier Phone"></p>
+                    </div>
+
+                    <div class="card-item">
+                        <p><b>Delivery Date: </b> <input class="mytextinput" name="delivery_date" value="{{content.delivery_date|date:'Y-m-d'}}" type="date"> [Format: MM-DD-YYYY]</p>
                     </div>
 
                 </div>

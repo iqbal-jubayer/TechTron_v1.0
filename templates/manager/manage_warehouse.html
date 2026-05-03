@@ -10,7 +10,13 @@
 
 {% block body %}
 <div class="main-container">
-    <form action="/manager/dashboard/update/warehouse/" method="post">
+    <form 
+    {% if operation == "update" %}
+    action="/manager/dashboard/update/warehouse/" 
+    {% else %}
+    action="/manager/dashboard/create/warehouse/" 
+    {% endif %}
+    method="post">
         {% csrf_token %}
         <div class="main-container-item">
             <input class="mytextinput" name="warehouse_id" type="text" placeholder="warehouse_id"
@@ -18,9 +24,6 @@
         </div>
         <div class="main-container-upper">
             <div class="main-container-upper-left">
-                <div class="main-container-item" style="padding-bottom: 25px;">
-                    <p>Warehouse No. :</p>
-                </div>
                 <div class="main-container-item" style="padding-bottom: 25px;">
                     <p>Warehouse Name:</p>
                 </div>
@@ -32,10 +35,6 @@
                 </div>
             </div>
             <div class="main-container-upper-right">
-                <div class="main-container-item">
-                    <input class="mytextinput" type="text" placeholder="warehouse_id" value="{{warehouse.warehouse_id}}"
-                        disabled>
-                </div>
                 <div class="main-container-item">
                     <input class="mytextinput" name="warehouse_name" type="text" placeholder="Warehouse Name"
                         value="{{warehouse.name}}">
@@ -50,7 +49,11 @@
             </div>
         </div>
         <div class="main-container-bottom">
+            {% if operation == "update" %}
             <button class="mybtn">Update</button>
+            {% else %}
+            <button class="mybtn">Add</button>
+            {% endif %}
         </div>
     </form>
 </div>

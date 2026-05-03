@@ -10,7 +10,13 @@
 
 {% block body %}
 <div class="main-container">
-    <form action="/manager/dashboard/update/suppliers/" method="post">
+    <form 
+    {% if operation == "update" %}
+    action="/manager/dashboard/update/suppliers/"
+    {% else %}
+    action="/manager/dashboard/add/suppliers/"
+    {% endif %}
+    method="post">
         {% csrf_token %}
         <div class="main-container-item">
             <input class="mytextinput" name="supplier_id" type="text" placeholder="Supplier ID"
@@ -49,7 +55,11 @@
             </div>
         </div>
         <div class="main-container-bottom">
+            {% if operation == "update" %}
             <button class="mybtn">Update</button>
+            {% else %}
+            <button class="mybtn">Add</button>
+            {% endif %}
         </div>
     </form>
 </div>

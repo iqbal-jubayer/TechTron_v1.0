@@ -1,4 +1,4 @@
-from django.shortcuts import render, HttpResponse, redirect
+from django.shortcuts import render, redirect
 from manager.models import *
 from django.db import connection
 
@@ -32,6 +32,29 @@ def dashboard(req):
         
     selected_filter = req.GET.get("filter")
     contents = None
+    
+    low_stock_inventory = Inventory.objects.raw('''
+            SELECT
+            inventory_id,
+            location,
+            quantity,
+            w.name as warehouse_name,
+            district,
+            area,
+            product_name,
+            brand,
+            model_number,
+            specs,
+            price,
+            weight,
+            s.name as supplier_name
+            FROM manager_inventory i JOIN manager_warehouse w ON i.warehouse_id = w.warehouse_id 
+            JOIN manager_product p ON p.product_id = i.product_id
+            JOIN manager_supplier s ON p.supplier_id = s.supplier_id 
+            WHERE quantity <= 20
+            ORDER BY i.quantity;
+            ''')
+    
     if(selected_filter == "warehouse" or selected_filter is None):
         warehouses = Warehouse.objects.raw(
             '''
@@ -185,6 +208,9 @@ def dashboard(req):
             u.email,
             shipment_address as address,
             SUM(shipping_cost) as total_cost,
+            carrier_partner_id,
+            carrier_phone,
+            delivery_date,
             w.name as warehouse,
             product_name,
             brand,
@@ -206,10 +232,20 @@ def dashboard(req):
             ORDER BY order_date ASC;
             ''')
         contents = orders
-        
+    
+    shipment_carriers = Shipment_Carriers.objects.raw(
+        '''
+        SELECT
+        *
+        FROM manager_shipment_carriers;
+        '''
+    )    
     
     context['contents'] = contents
     context["selected_filter"] = selected_filter
+    
+    context['inventories'] = low_stock_inventory
+    context['shipment_carriers'] = shipment_carriers
     return render(req, "manager/dashboard.html", context)
 
 def updateOrders(req):
@@ -220,6 +256,11 @@ def updateOrders(req):
     order_id = req.POST.get('order_id')
     status = req.POST.get('status')
     address = req.POST.get('address')
+    
+    carrier_partner = req.POST.get('carrier_partner')
+    carrier_Phone = req.POST.get('carrier_phone')
+    delivery_date = req.POST.get('delivery_date')
+    
     try:
         order = Order.objects.raw(
             '''
@@ -239,10 +280,30 @@ def updateOrders(req):
             ''', [order_id]
         )
         
+        
         for shipment in shipments:
-            if shipment.shipment_address != address:
-                shipment.shipment_address = address
-                shipment.save()
+            if delivery_date == "":
+                delivery_date = "NULL"
+            if len(carrier_Phone) != 11 or not carrier_Phone.isdigit():
+                print("Invalid Phone")
+                break
+
+            if carrier_partner == "0":
+                carrier_partner = "NULL"
+                
+            print(shipment.shipment_id, address, carrier_Phone, carrier_partner, delivery_date)
+            
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    '''
+                    UPDATE manager_shipment
+                    SET shipment_address=%s,
+                    carrier_partner_id=%s,
+                    carrier_phone=%s,
+                    delivery_date=%s
+                    WHERE shipment_id=%s
+                    ''', [address, carrier_partner, carrier_Phone, delivery_date, shipment.shipment_id]
+                )
         if status == "1":
             status = "PENDING"
         elif status == "2":
@@ -253,7 +314,7 @@ def updateOrders(req):
             status = "COMPLETED"
         elif status == "5":
             status = "CANCELLED"
-            
+        
         if(order.status != status):
             if status == "CANCELLED":
                 for shipment in shipments:
@@ -275,7 +336,6 @@ def updateOrders(req):
                             WHERE inventory_id=%s
                             ''', [inventory.quantity, inventory_id]
                         )
-                    # inventory.save()
             order.status = status
             with connection.cursor() as cursor:
                 cursor.execute(
@@ -289,7 +349,7 @@ def updateOrders(req):
         print(e)
     return redirect(f'/manager/dashboard/?filter=orders#{order_id   }')
 
-
+# Warehouse Management - Humaiya
 def editWarehouse(req,id):
     context = {"mytitle":WEBSITE_NAME}
     
@@ -304,8 +364,9 @@ def editWarehouse(req,id):
         ''', [id]
     )[0]
     context["warehouse"] = warehouse
+    context["operation"] = "update"
     
-    return render(req, "manager/edit_warehouse.html", context)
+    return render(req, "manager/manage_warehouse.html", context)
 
 def updateWarehouse(req):
     context = {"mytitle":WEBSITE_NAME}
@@ -325,7 +386,7 @@ def updateWarehouse(req):
                 SET name=%s,
                 area=%s,
                 district=%s
-                WHERE warehouse_id=%s
+                WHERE warehouse_id=%s;
                 ''', [name, area, district, warehouse_id]
             )
     
@@ -334,15 +395,15 @@ def updateWarehouse(req):
 def addWarehouse(req):
     context = {"mytitle":WEBSITE_NAME}
     checkAuthentication(req, context)
-    return render(req, "manager/add_warehouse.html",context)
+    context["operation"] = "add"
+    return render(req, "manager/manage_warehouse.html",context)
 
 def createWarehouse(req):
     context = {"mytitle":WEBSITE_NAME}
-    
     checkAuthentication(req, context)
     
     if req.method == "POST":
-        name = req.POST.get("name")
+        name = req.POST.get("warehouse_name")
         area = req.POST.get("area")
         district = req.POST.get("district")
         
@@ -373,7 +434,7 @@ def deleteWarehouse(req,id):
     
     return redirect(f"/manager/dashboard/?filter=warehouse")
 
-
+# Supplier Management - Humaiya
 def editSupplier(req, id):
     context = {"mytitle":WEBSITE_NAME}
     checkAuthentication(req, context)
@@ -388,12 +449,14 @@ def editSupplier(req, id):
     )[0]
     
     context["supplier"] = supplier
+    context["operation"] = "update"
     
-    return render(req, "manager/edit_supplier.html",context)
+    return render(req, "manager/manage_supplier.html", context)
 
 def updateSupplier(req):
     context = {"mytitle":WEBSITE_NAME}
     checkAuthentication(req, context)
+    
     if req.method == "POST":
         id = req.POST.get("supplier_id")
         name = req.POST.get("name")
@@ -418,7 +481,8 @@ def updateSupplier(req):
 def addSupplier(req):
     context = {"mytitle":WEBSITE_NAME}
     checkAuthentication(req, context)
-    return render(req, "manager/add_supplier.html",context)
+    context["operation"] = "add"
+    return render(req, "manager/manage_supplier.html",context)
 
 def createSupplier(req):
     context = {"mytitle":WEBSITE_NAME}
@@ -459,7 +523,7 @@ def deleteSupplier(req, id):
     return redirect("/manager/dashboard/?filter=suppliers")
 
 
-
+# Product Management - Sadik
 def editProducts(req, id):
     context = {"mytitle":WEBSITE_NAME}
     checkAuthentication(req, context)
@@ -484,25 +548,8 @@ def editProducts(req, id):
     )
     context["suppliers"] = suppliers
     
-    available_categories = Category.objects.raw(
-        '''
-        SELECT
-        *
-        FROM manager_category;
-        '''
-    )
-    context["available_categories"] = available_categories
-    
-    product_category = Category.objects.raw(
-        '''
-        SELECT
-        *
-        FROM manager_belongto_category
-        WHERE product_id=%s;
-        ''', [id]
-    )
-    context["product_category"] = product_category[0]
-    return render(req, "manager/edit_product.html",context)
+    context["operation"] = "update"
+    return render(req, "manager/manage_product.html",context)
 
 def updateProducts(req):
     context = {"mytitle":WEBSITE_NAME}
@@ -545,7 +592,8 @@ def addProducts(req):
         '''
     )
     context["suppliers"] = suppliers
-    return render(req, "manager/add_product.html", context)
+    context["operation"] = "add"
+    return render(req, "manager/manage_product.html", context)
 
 def createProducts(req):
     context = {"mytitle":WEBSITE_NAME}
@@ -574,4 +622,132 @@ def deleteProducts(req, id):
     context = {"mytitle":WEBSITE_NAME}
     checkAuthentication(req, context)
     
-    return HttpResponse("Delete Products")
+    if not CAN_DELETE:
+        print("Cannot Delete")
+        return redirect("/manager/dashboard/?filter=products")
+    
+    with connection.cursor() as cursor:
+        cursor.execute(
+            '''
+            DELETE FROM manager_product 
+            WHERE product_id=%s;
+            ''', [id]
+        )
+    
+    return redirect("/manager/dashboard/?filter=products")
+
+# Inventory Management - Jubayer
+def editInventory(req, id):
+    context = {"mytitle":WEBSITE_NAME}
+    checkAuthentication(req, context)
+    
+    products = Product.objects.raw(
+        '''
+        SELECT
+        *,
+        name as supplier_name
+        FROM manager_product p
+        JOIN manager_supplier s ON p.supplier_id = s.supplier_id;
+        '''
+    )
+    context["products"] = products
+    
+    warehouses = Warehouse.objects.raw(
+        '''
+        SELECT
+        *
+        FROM manager_warehouse;
+        '''
+    )
+    context["warehouses"] = warehouses
+    
+    inventory = Inventory.objects.raw(
+        '''
+        SELECT 
+        *
+        FROM manager_inventory
+        WHERE inventory_id = %s
+        ''', [id]
+    )[0]
+    context["inventory"] = inventory
+    context["operation"] = "update"
+    return render(req, "manager/manage_inventory.html",context)
+
+def updateInventory(req):
+    context = {"mytitle":WEBSITE_NAME}
+    checkAuthentication(req, context)
+    
+    if req.method == "POST":
+        inventory_id = req.POST.get("inventory_id")
+        warehouse_id = req.POST.get("warehouse")
+        product_id = req.POST.get("product")
+        quantity = req.POST.get("quantity")
+        
+        with connection.cursor() as cursor:
+            cursor.execute(
+                '''
+                UPDATE manager_inventory
+                SET warehouse_id=%s,
+                product_id=%s,
+                quantity=%s
+                WHERE inventory_id=%s;
+                ''', [warehouse_id, product_id, quantity, inventory_id]
+            )
+    
+    return redirect("/manager/dashboard/?filter=inventory")
+
+def addInventory(req):
+    context = {"mytitle":WEBSITE_NAME}
+    checkAuthentication(req, context)
+    
+    products = Product.objects.raw(
+        '''
+        SELECT
+        *,
+        name as supplier_name
+        FROM manager_product p
+        JOIN manager_supplier s ON p.supplier_id = s.supplier_id;
+        '''
+    )
+    context["products"] = products
+    
+    warehouses = Warehouse.objects.raw(
+        '''
+        SELECT
+        *
+        FROM manager_warehouse;
+        '''
+    )
+    context["warehouses"] = warehouses
+    context["operation"] = "add"
+    
+    return render(req, "manager/manage_inventory.html", context)
+
+def createInventory(req):
+    context = {"mytitle":WEBSITE_NAME}
+    checkAuthentication(req, context)
+    
+    if req.method == "POST":
+        
+        warehouse_id = req.POST.get("warehouse")
+        product_id = req.POST.get("product")
+        quantity = req.POST.get("quantity")
+        
+        print(warehouse_id, product_id, quantity)
+        
+        with connection.cursor() as cursor:
+            cursor.execute(
+                '''
+                INSERT INTO manager_inventory(quantity, product_id, warehouse_id)
+                VALUES(%s, %s, %s);
+                ''', [quantity, product_id, warehouse_id]
+            )
+    
+    return redirect("/manager/dashboard/?filter=inventory")
+
+def deleteInventory(req, id):
+    context = {"mytitle":WEBSITE_NAME}
+    checkAuthentication(req, context)
+    
+    return redirect('/')
+

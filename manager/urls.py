@@ -22,5 +22,11 @@ urlpatterns = [
     path('dashboard/create/products/', views.createProducts),
     path('dashboard/delete/products/<int:id>', views.deleteProducts),
     
+    path('dashboard/edit/inventory/<int:id>', views.editInventory),
+    path('dashboard/update/inventory/', views.updateInventory),
+    path('dashboard/add/inventory/', views.addInventory),
+    path('dashboard/create/inventory/', views.createInventory),
+    path('dashboard/delete/inventory/<int:id>', views.deleteInventory),
+    
     path('dashboard/update/orders/', views.updateOrders),
 ]

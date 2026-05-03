@@ -4,10 +4,10 @@
     /* justify-content: center; */
     align-items: center;
     /* height: 50vh; */
+    padding: 10px;
 }
 
-.main-container form {
-}
+.main-container form {}
 
 .main-container-upper {
     display: flex;
@@ -22,11 +22,22 @@
     align-items: end;
 }
 
-.main-container-item{
-    padding: 0 0 10px 0;
+.main-container-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
 }
 
-.main-container-bottom{
+.main-container-bottom {
     display: flex;
     justify-content: center;
+}
+
+td{
+    padding: 2px;
+}
+.td-right{
+    text-align: right;
+    font-weight: 600;
 }

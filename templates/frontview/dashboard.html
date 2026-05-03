@@ -56,7 +56,28 @@
                     <h3><b>Total Cost:</b> {{order.total_cost}} BDT</h3>
                 </div>
                 <div class="item-card-right">
-                    <p class="p-{{order.status}}">{{order.status}}</p>
+                    <p class="p-{{order.status}} orderStat">{{order.status}}</p>
+                    <p><b>Carrier Partner:</b>
+                        {% if order.carrier_partner_id == None %}
+                        N/A
+                        {% else %}
+                        {{order.carrier_partner}}
+                        {% endif %}
+                    </p>
+                    <p><b>Carrier Phone:</b>
+                        {% if order.carrier_partner_id == None %}
+                        N/A
+                        {% else %}
+                        {{order.carrier_phone}}
+                        {% endif %}
+                    </p>
+                    <p><b>Delivery Date:</b>
+                        {% if order.carrier_partner_id == None %}
+                        N/A
+                        {% else %}
+                        {{order.delivery_date|date:'D, d-M-Y'}}
+                        {% endif %}
+                    </p>
                     <form action="/order/{{order.order_id}}/cancel/" method="post">
                         {% csrf_token %}
                         {% if order.status == 'PENDING' or order.status == 'PROCESSING' %}

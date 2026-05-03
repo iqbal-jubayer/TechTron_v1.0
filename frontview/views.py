@@ -21,6 +21,7 @@ def handleNavbarLogged(req, context):
         return user
 
 # Create your views here.
+# Humaiya
 def home(req):
     context = {"mytitle":WEBSITE_NAME}
     
@@ -86,6 +87,7 @@ def home(req):
 
     return render(req, "frontview/home.html", context)
 
+# Humaiya
 def login(req):
     context = {"mytitle":WEBSITE_NAME}
     if 'user_id' in req.session:
@@ -106,6 +108,7 @@ def login(req):
             context["login_error"] = "Username or Password is incorrect"
     return render(req, "frontview/login.html", context)
 
+# Humaiya
 def signup(req):
     context = {"mytitle":WEBSITE_NAME}
     
@@ -135,6 +138,7 @@ def signup(req):
             print("Already Exists!")
     return render(req, "frontview/signup.html", context)
 
+# Humaiya
 def logout(req):
     req.session.flush()
     return redirect('/')
@@ -292,14 +296,14 @@ def order_completion(req):
     for inv, q in invent:
         inventory_id = inv.inventory_id
         address = user.address  
-        cost = product.price * q + 70
+        cost = float(product.price) * q + 70 + q * 0.1 * float(product.weight)
         
         with connection.cursor() as cursor:
             cursor.execute(
                 '''
                 INSERT INTO manager_shipment (order_id, inventory_id, shipment_address, shipping_cost, quantity, status)
                 VALUES (%s, %s, %s, %s, %s, %s);
-                ''', (order_id,inventory_id,address,cost,q, "PENDING"))
+                ''', (order_id, inventory_id, address, cost, q, "PENDING"))
         
         inventory = Inventory.objects.raw(
             f'''
@@ -321,38 +325,48 @@ def order_completion(req):
     
     return redirect('/')
 
+# Sadik
 def dashboard(req):
     context = {"mytitle":WEBSITE_NAME}
     if 'user_id' not in req.session:
         return redirect('/')
     
     user = handleNavbarLogged(req,context)
-    orders = Order.objects.raw(f'''
-                            SELECT
-                            ordr.order_id as order_id,
-                            order_date,
-                            ordr.status as status,
-                            delivery_date,
-                            carrier_phone,
-                            SUM(shipping_cost) as total_cost,
-                            shipment_address as address,
-                            oi.quantity, 
-                            p.product_id,
-                            product_name,
-                            brand,
-                            model_number,
-                            specs,
-                            price,
-                            weight,
-                            name as supplier_name
-                            FROM manager_order ordr 
-                            JOIN manager_shipment shipment ON ordr.order_id = shipment.order_id 
-                            JOIN manager_order_item oi ON ordr.order_id = oi.order_id 
-                            JOIN manager_product p ON oi.product_id = p.product_id 
-                            JOIN manager_supplier splr ON splr.supplier_id = p.supplier_id 
-                            WHERE user_id = {user.user_id} 
-                            GROUP BY ordr.order_id, shipment.delivery_date, carrier_phone, shipment_address, oi.quantity, p.product_id
-                            ORDER BY order_date DESC;''')
+    
+    orders = Order.objects.raw(
+        '''
+            SELECT
+            ordr.order_id as order_id,
+            order_date,
+            ordr.status as status,
+            delivery_date,
+            carrier_phone,
+            carrier_partner_id,
+            SUM(shipping_cost) as total_cost,
+            shipment_address as address,
+            oi.quantity, 
+            p.product_id,
+            product_name,
+            brand,
+            model_number,
+            specs,
+            price,
+            weight,
+            splr.name as supplier_name,
+            sc.name as carrier_partner
+            FROM manager_order ordr 
+            
+            JOIN manager_shipment shipment ON ordr.order_id = shipment.order_id 
+            JOIN manager_order_item oi ON ordr.order_id = oi.order_id 
+            JOIN manager_product p ON oi.product_id = p.product_id 
+            JOIN manager_supplier splr ON splr.supplier_id = p.supplier_id 
+            LEFT JOIN manager_shipment_carriers sc ON shipment.carrier_partner_id = sc.carrier_id
+            
+            WHERE user_id=%s
+            GROUP BY ordr.order_id, shipment.delivery_date, carrier_phone, shipment_address, oi.quantity, p.product_id
+            ORDER BY order_date DESC;
+            ''', [user.user_id]
+            )
         
     context["total_order"] = len(orders)
     context["pending_order"] = 0
@@ -382,11 +396,16 @@ def help(req):
     handleNavbarLogged(req, context)
     return render(req, "frontview/help.html", context)
 
+# Sadik
 def cancelOrder(req,id): 
+    
     if 'user_id' not in req.session:
         return redirect('/login')
+    
     context = {"mytitle":WEBSITE_NAME}
+    
     user = handleNavbarLogged(req, context)
+    
     try:
         order = Order.objects.raw(
             f'''
@@ -404,22 +423,27 @@ def cancelOrder(req,id):
                 SELECT * FROM manager_inventory WHERE inventory_id = {shipment.inventory.inventory_id}
                 '''
             )[0]
+            
             inventory.quantity += shipment.quantity
+            
             with connection.cursor() as cursor:
                 cursor.execute(
-                    f"""
+                    """
                     UPDATE manager_inventory 
-                    SET quantity = {inventory.quantity}
-                    WHERE inventory_id = {inventory.inventory_id};
-                    """)
+                    SET quantity = %s
+                    WHERE inventory_id = %s;
+                    """, [inventory.quantity, inventory.inventory_id]
+                    )
+                
         order.status = "CANCELLED"
         with connection.cursor() as cursor:
                 cursor.execute(
-                    f"""
+                    """
                     UPDATE manager_order 
-                    SET status = "{order.status}"
-                    WHERE order_id = {order.order_id};
-                    """)
+                    SET status=%s
+                    WHERE order_id=%s;
+                    """, [order.status, order.order_id]
+                    )
     except Exception as e:
         print(e)
     return redirect('/dashboard/')

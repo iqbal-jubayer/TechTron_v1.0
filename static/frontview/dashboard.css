@@ -91,6 +91,12 @@
     padding: 0 10px 0 15px;
     border-radius: 10px;
     border: 2px solid black;
+}
+
+.orderStat{
+    padding: 0 10px 0 15px;
+    border-radius: 10px;
+    border: 2px solid black;
     font-weight: 600;
 }
 

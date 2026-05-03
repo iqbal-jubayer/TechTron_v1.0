@@ -49,7 +49,7 @@
                 
                 {% if selected_filter != "orders" and selected_filter != "customers" and selected_filter != "categories"%}
                 <div class="manager-dashboard-add">
-                    <form action="add/{{selected_filter}}" method="get">
+                    <form {% if selected_filter == None %}action="add/warehouse"{% else %}action="add/{{selected_filter}}"{%endif%} method="get">
                         <button>+</button>
                     </form>
                 </div>
@@ -82,7 +82,30 @@
                 {% endfor %}
 
             </div>
-            <div class="container-right">Right</div>
+            <div class="container-right">
+                <div class="container-right-item" style="padding: 20px;">
+                    <h2 style="color: white;">WARNING</h2>
+                </div>
+                <div class="container-right-item">
+                    {% if inventories%}
+                    {% for inventory in inventories %}
+                    {% if inventory.quantity <= 20 %}
+                    <a href="/manager/dashboard/?filter=inventory#i-{{inventory.inventory_id}}" style="text-decoration: none; color: black">
+                    <div class="warning-card">
+                        <p><b>Inventory No.</b> {{inventory.inventory_id}}</p>
+                        <p><b>Product:</b> {{inventory.product}}</p>
+                        <p><b>Quantity:</b> {{inventory.quantity}}</p>
+                    </div>
+                    </a>
+                    {% endif%}
+                    {% endfor %}
+                    {% else %}
+                    <div class="warning-card" style="background-color: rgb(0, 159, 0); color: white;">
+                        <p><b>Stock Level is OK</b></p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
         </div>
     </div>
 </div>

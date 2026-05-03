@@ -1,0 +1,134 @@
+{% extends "frontview/base.html" %}
+
+{% load static %}
+
+{% block title %}TechTron - Home{% endblock title %}
+
+
+
+{% block links %}
+<link rel="stylesheet" href="{% static 'frontview/account_settings.css'%}">
+{% endblock links %}
+
+{% block scripts %}
+<script src="{% static 'manager/inventory.js' %}"></script>
+{% endblock scripts %}
+
+{% block body %}
+<div class="main-container">
+    {% if operation == "add" %}
+        <h2>Add Inventory</h2>
+    {% else %}
+        <h2>Update Inventory</h2>
+    {% endif %}
+    <form 
+    {% if operation == "update" %}
+    action="/manager/dashboard/update/inventory/" 
+    {% else%}
+    action="/manager/dashboard/create/inventory/"
+    {% endif %}
+    method="post">
+        {% csrf_token %}
+        <div class="main-container-item">
+            <input class="mytextinput" name="inventory_id" type="text" placeholder="Inventory ID"
+                value="{{inventory.inventory_id}}" hidden>
+        </div>
+
+        <table class="main-container-upper">
+            <tr>
+                <td class="td-right">
+                    <p>Warehouse:</p>
+                </td>
+                <td>
+                    <select class="mytextinput" name="warehouse" id="" required>
+                        <option value="" selected disabled>Select Warehouse</option>
+                        {% for warehouse in warehouses%}
+                        <option value="{{warehouse.warehouse_id}}">{{warehouse.name}}</option>
+                        {% endfor %}
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td class="td-right">
+                    <p>Product Name:</p>
+                </td>
+                <td>
+                    <select class="mytextinput" name="product" id="" required>
+                        <option value="" selected disabled>Select Product</option>
+                        {% for product in products%}
+                        <option value="{{product.product_id}}" data-brand="{{product.brand}}" data-model = "{{product.model_number}}" data-specs = "{{product.specs}}" 
+                        data-weight="{{product.weight}}"
+                        data-price="{{product.price}}"
+                        data-supplier="{{product.supplier}}" {% if product.product_id == inventory.product_id %} selected {% endif %} >{{product.product_name}}</option>
+                        {% endfor %}
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td class="td-right">
+                        <p>Brand:</p>
+                </td>
+                <td>
+                    <input class="mytextinput" name="brand" type="text" placeholder="Brand" value="{{product.brand}}" disabled>
+                </td>
+            </tr>
+            <tr>
+                <td class="td-right">
+                    <p>Model:</p>
+                </td>
+                <td>
+                    <input class="mytextinput" name="model" type="text" placeholder="Model" value="{{product.model_number}}" disabled>
+                </td>
+            </tr>
+            <tr>
+                <td class="td-right">
+                    <p>Specs:</p>
+                </td>
+                <td>
+                    <textarea class="mytextinput" name="specs" id="" disabled>{{product.specs}}</textarea>
+                </td>
+            </tr>
+            <tr>
+                <td class="td-right">
+                    <p>Weight:</p>
+                </td>
+                <td>
+                    <input class="mytextinput" name="weight" type="number" step="any" placeholder="Weight" value="{{product.weight}}" disabled> g
+                </td>
+            </tr>
+            <tr>
+                <td class="td-right">
+                    <p>Price:</p>
+                </td>
+                <td>
+                    <input class="mytextinput" name="price" type="number" step="any" placeholder="Price" value="{{product.price}}" disabled> BDT
+                </td>
+            </tr>
+            <tr>
+                <td class="td-right">
+                    <p>Supplier:</p>
+                </td>
+                <td>
+                    <input class="mytextinput" name="supplier" type="text" placeholder="Supplier" value="{{product.model_number}}" disabled>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="td-right">
+                    <p>Quantity:</p>
+                </td>
+                <td>
+                    <input class="mytextinput" name="quantity" type="number" placeholder="Quantity" value="{{inventory.quantity}}" required>
+                </td>
+            </tr>
+        </table>
+        <div class="main-container-bottom">
+            {% if operation == "update" %}
+            <button class="mybtn">Update</button>
+            {% else %}
+            <button class="mybtn">Add</button>
+            {% endif %}
+        </div>
+    </form>
+</div>
+{% endblock body %}
