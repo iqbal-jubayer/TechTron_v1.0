@@ -43,7 +43,11 @@
                     <select class="mytextinput" name="warehouse" id="" required>
                         <option value="" selected disabled>Select Warehouse</option>
                         {% for warehouse in warehouses%}
-                        <option value="{{warehouse.warehouse_id}}">{{warehouse.name}}</option>
+                        <option value="{{warehouse.warehouse_id}}"
+                        {% if inventory.name == warehouse.name %}
+                        selected
+                        {% endif%}
+                        >{{warehouse.name}}</option>
                         {% endfor %}
                     </select>
                 </td>

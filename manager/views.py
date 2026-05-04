@@ -33,6 +33,7 @@ def dashboard(req):
     selected_filter = req.GET.get("filter")
     contents = None
     
+    low_stock_threshold = 20
     low_stock_inventory = Inventory.objects.raw('''
             SELECT
             inventory_id,
@@ -51,9 +52,10 @@ def dashboard(req):
             FROM manager_inventory i JOIN manager_warehouse w ON i.warehouse_id = w.warehouse_id 
             JOIN manager_product p ON p.product_id = i.product_id
             JOIN manager_supplier s ON p.supplier_id = s.supplier_id 
-            WHERE quantity <= 20
+            WHERE quantity <= %s
             ORDER BY i.quantity;
-            ''')
+            ''', [low_stock_threshold]
+            )
     
     if(selected_filter == "warehouse" or selected_filter is None):
         warehouses = Warehouse.objects.raw(
@@ -283,15 +285,15 @@ def updateOrders(req):
         
         for shipment in shipments:
             if delivery_date == "":
-                delivery_date = "NULL"
-            if len(carrier_Phone) != 11 or not carrier_Phone.isdigit():
-                print("Invalid Phone")
-                break
+                delivery_date = None
+                
+            if len(carrier_Phone) > 0:
+                if len(carrier_Phone) > 11 or not carrier_Phone.isdigit():
+                    print("Invalid Phone")
+                    break
 
             if carrier_partner == "0":
-                carrier_partner = "NULL"
-                
-            print(shipment.shipment_id, address, carrier_Phone, carrier_partner, delivery_date)
+                carrier_partner = None
             
             with connection.cursor() as cursor:
                 cursor.execute(
@@ -665,7 +667,8 @@ def editInventory(req, id):
         '''
         SELECT 
         *
-        FROM manager_inventory
+        FROM manager_inventory i
+        JOIN manager_warehouse w ON i.warehouse_id = w.warehouse_id
         WHERE inventory_id = %s
         ''', [id]
     )[0]

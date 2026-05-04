@@ -78,7 +78,8 @@ def home(req):
         sum(quantity) as total_quantity 
         FROM manager_product p 
         LEFT JOIN manager_belongto_category bc ON bc.product_id = p.product_id 
-        LEFT JOIN manager_inventory i ON i.product_id = p.product_id WHERE bc.product_id IS NULL
+        LEFT JOIN manager_inventory i ON i.product_id = p.product_id 
+        WHERE bc.product_id IS NULL
         GROUP BY product_id;
         '''
     )
@@ -143,6 +144,7 @@ def logout(req):
     req.session.flush()
     return redirect('/')
 
+# Sadik
 def product_details(req, id):
     context = {"mytitle":WEBSITE_NAME}
     product = Product.objects.raw(f'''
@@ -169,6 +171,7 @@ def product_details(req, id):
     
     return render(req, "frontview/product_details.html", context)
 
+# Sadik
 def place_order(req):
     if 'user_id' not in req.session:
         return redirect('/login')
@@ -247,6 +250,7 @@ def handleInventory(product_id, qty):
             
     return inv
 
+# Jubayer
 def order_completion(req):
     if 'user_id' not in req.session:
         return redirect('/')

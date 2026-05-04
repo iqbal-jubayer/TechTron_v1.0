@@ -14,7 +14,7 @@
     {% if operation == "update" %}
     action="/manager/dashboard/update/suppliers/"
     {% else %}
-    action="/manager/dashboard/add/suppliers/"
+    action="/manager/dashboard/create/suppliers/"
     {% endif %}
     method="post">
         {% csrf_token %}
